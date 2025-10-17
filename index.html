@@ -95,6 +95,7 @@
             display: inline-block; /* Essential for text wrapping with typewriter */
             vertical-align: bottom; /* Aligns cursor nicely */
             min-height: 1em; /* Prevents layout jump */
+            width: 100%; /* Ensure it takes up container width */
         }
 
         /* The typewriter cursor effect */
@@ -373,6 +374,9 @@
                     element.innerHTML += text.charAt(typewriterIndex);
                     typewriterIndex++;
                     typewriterTimeout = setTimeout(type, 30); // Typing speed
+                } else {
+                    // Optional: remove blinking cursor when done
+                    // element.style.borderRight = 'none';
                 }
             }
             type();
@@ -391,23 +395,22 @@
                 canvas.style.cursor = 'pointer';
                 hoveredStar = star;
                 
-                // NEW: Update and show tooltip
-                hoverTooltip.innerHTML = `
-                    <h3 class="text-xl font-bold text-cyan-300">${star.title}</h3>
-                    <p>${star.artist}</p>
-                    <p class="text-sm text-gray-400 mt-2">Released: ${star.year}</p>
-                    <p id="typewriter-output" class="text-sm text-gray-300 mt-2 typewriter-text"></p>
-                `;
-                typewriterElement = document.getElementById('typewriter-output');
-
-
-                // Only trigger typewriter if a new star is hovered
+                // Only trigger effects if the star has changed
                 if (star.id !== lastHoveredStarId) {
+                    hoverTooltip.innerHTML = `
+                        <h3 class="text-xl font-bold text-cyan-300">${star.title}</h3>
+                        <p>${star.artist}</p>
+                        <p class="text-sm text-gray-400 mt-2">Released: ${star.year}</p>
+                        <p id="typewriter-output" class="text-sm text-gray-300 mt-2 typewriter-text"></p>
+                    `;
+                    typewriterElement = document.getElementById('typewriter-output');
+                    
                     typeWriter(star.sample, typewriterElement);
                     playSnippet(star);
                     lastHoveredStarId = star.id;
                 }
                 
+                // Always update position
                 let x = star.x * canvas.width + 20;
                 let y = star.y * canvas.height;
 
@@ -427,12 +430,11 @@
                 hoveredStar = null;
                 hoverTooltip.classList.remove('active'); // Hide tooltip
                 
-                // Stop typewriter animation
-                if (typewriterTimeout) {
-                    clearTimeout(typewriterTimeout);
-                }
-
                 if(lastHoveredStarId !== null) {
+                    // Stop typewriter animation
+                    if (typewriterTimeout) {
+                        clearTimeout(typewriterTimeout);
+                    }
                     if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
                         ytPlayer.pauseVideo();
                     }
