@@ -86,6 +86,28 @@
             transform: translateY(0) scale(1);
             visibility: visible;
         }
+
+        /* Typewriter effect styles */
+        .typewriter-text {
+            overflow: hidden; /* Ensures the text is hidden until typed */
+            white-space: normal; /* Allows text to wrap */
+            border-right: .15em solid orange; /* The blinking cursor */
+            animation: typing 3s steps(30, end) forwards, blink-caret .75s step-end infinite;
+            display: inline-block; /* Essential for text wrapping with typewriter */
+        }
+
+        /* Typing animation */
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        /* The typewriter cursor effect */
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: cyan; } /* Changed to cyan to match theme */
+        }
+
     </style>
 </head>
 <body class="antialiased">
@@ -101,23 +123,18 @@
     <canvas id="constellation-canvas"></canvas>
 
     <div class="content-overlay">
-        <!-- Header -->
-        <header class="text-center mb-8">
+        <!-- Header --><header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-bold tracking-wider text-white">Sonic Constellations</h1>
             <p class="text-lg md:text-xl text-cyan-200 mt-2">Exploring the invisible lines connecting music through time.</p>
         </header>
 
-        <!-- Navigation -->
-        <nav id="constellation-nav" class="flex flex-wrap justify-center gap-3 mb-8">
-            <!-- Navigation buttons will be injected by JS -->
-        </nav>
+        <!-- Navigation --><nav id="constellation-nav" class="flex flex-wrap justify-center gap-3 mb-8">
+            <!-- Navigation buttons will be injected by JS --></nav>
     </div>
 
-    <!-- NEW: Tooltip element -->
-    <div id="hover-tooltip" class="hover-tooltip"></div>
+    <!-- NEW: Tooltip element --><div id="hover-tooltip" class="hover-tooltip"></div>
     
-    <!-- YouTube player will be injected here -->
-    <div id="youtube-player"></div>
+    <!-- YouTube player will be injected here --><div id="youtube-player"></div>
 
     <script>
         const canvas = document.getElementById('constellation-canvas');
@@ -133,27 +150,34 @@
         let volumeFadeInterval;
         let isYTAPiReady = false;
 
+        // Typewriter specific variables
+        let typewriterTimeout;
+        let typewriterIndex = 0;
+        let currentTypewriterText = '';
+        let typewriterElement = null;
+
+
         // --- DATA: Define the constellations with sound ---
         const constellations = {
             "Amen Break": {
                 name: "The 'Amen Break'",
                 stars: [
-                    { id: 1, title: "Amen, Brother", artist: "The Winstons", year: 1969, x: 0.5, y: 0.5, isSource: true, sample: "The foundational 6-second drum solo.", sound: { videoId: 'GxZuq57_bYM', startTime: 86 } },
-                    { id: 2, title: "Straight Outta Compton", artist: "N.W.A.", year: 1988, x: 0.3, y: 0.35, sample: "The iconic drum loop provides the track's backbone.", sound: { videoId: 'TMZi25Pq3T8', startTime: 4 } },
-                    { id: 3, title: "King of the Beats", artist: "Mantronix", year: 1988, x: 0.7, y: 0.25, sample: "One of the earliest hip-hop tracks to popularize the break.", sound: { videoId: 'WzgODI4osy4', startTime: 19 } },
-                    { id: 4, title: "I Desire", artist: "Salt-N-Pepa", year: 1986, x: 0.65, y: 0.7, sample: "The break is pitched up and sped up, giving the track its energy.", sound: { videoId: 'oJ3yleK136k', startTime: 11 } },
-                    { id: 5, title: "Pigs", artist: "Tyler, The Creator", year: 2013, x: 0.35, y: 0.8, sample: "A modern usage, showing the break's timeless appeal in pop music.", sound: { videoId: 'gmr4iZ5dimY', startTime: 0 } },
-                    { id: 6, title: "Sugar On My Tongue", artist: "Tyler, The Creator", year: 2025, x: 0.85, y: 0.45, sample: "Samples the driving beat from 'King of the Beats'.", sound: { videoId: 'ljHdccyQbT4', startTime: 139 }, connectsTo: 3 }
+                    { id: 1, title: "Amen, Brother", artist: "The Winstons", year: 1969, x: 0.5, y: 0.5, isSource: true, sample: "The foundational 6-second drum solo that became one of the most sampled breaks in history.", sound: { videoId: 'GxZuq57_bYM', startTime: 86 } },
+                    { id: 2, title: "Straight Outta Compton", artist: "N.W.A.", year: 1988, x: 0.3, y: 0.35, sample: "The iconic drum loop provides the track's raw backbone, defining the West Coast sound.", sound: { videoId: 'TMZi25Pq3T8', startTime: 4 } },
+                    { id: 3, title: "King of the Beats", artist: "Mantronix", year: 1988, x: 0.7, y: 0.25, sample: "One of the earliest hip-hop tracks to heavily feature and popularize the Amen Break.", sound: { videoId: 'WzgODI4osy4', startTime: 19 } },
+                    { id: 4, title: "I Desire", artist: "Salt-N-Pepa", year: 1986, x: 0.65, y: 0.7, sample: "The break is pitched up and sped up, giving the track its infectious energy and rhythm.", sound: { videoId: 'oJ3yleK136k', startTime: 11 } },
+                    { id: 5, title: "Pigs", artist: "Tyler, The Creator", year: 2013, x: 0.35, y: 0.8, sample: "A modern usage, showing the break's timeless appeal and versatility across genres.", sound: { videoId: 'gmr4iZ5dimY', startTime: 0 } },
+                    { id: 6, title: "Sugar On My Tongue", artist: "Tyler, The Creator", year: 2011, x: 0.85, y: 0.45, sample: "Features a prominent sample of the driving beat from Mantronix's 'King of the Beats'.", sound: { videoId: 'ljHdccyQbT4', startTime: 139 }, connectsTo: 3 }
                 ]
             },
             "Funky Drummer": {
                 name: "The 'Funky Drummer'",
                 stars: [
-                    { id: 1, title: "Funky Drummer", artist: "James Brown", year: 1970, x: 0.5, y: 0.5, isSource: true, sample: "Clyde Stubblefield's legendary drum break.", sound: { videoId: 'dNPaf2D3TSE', startTime: 326 } },
-                    { id: 2, title: "Rebel Without a Pause", artist: "Public Enemy", year: 1987, x: 0.25, y: 0.6, sample: "The break is chopped and layered to create a chaotic, energetic rhythm.", sound: { videoId: '21sK74_prJA', startTime: 53 } },
-                    { id: 3, title: "Freedom! '90", artist: "George Michael", year: 1990, x: 0.7, y: 0.7, sample: "A clean loop of the break drives this pop anthem.", sound: { videoId: 'diYAc7gB-0A', startTime: 0 } },
-                    { id: 4, title: "Let Me Ride", artist: "Dr. Dre", year: 1992, x: 0.3, y: 0.3, sample: "The break forms the core of this G-funk classic.", sound: { videoId: '3-S2s_x2vjU', startTime: 32 } },
-                    { id: 5, title: "Run's House", artist: "Run-DMC", year: 1988, x: 0.75, y: 0.35, sample: "The unmistakable groove powers this hip-hop staple.", sound: { videoId: '22gGAY82A6A', startTime: 0 } }
+                    { id: 1, title: "Funky Drummer", artist: "James Brown", year: 1970, x: 0.5, y: 0.5, isSource: true, sample: "Clyde Stubblefield's legendary drum break, a cornerstone of hip-hop and funk.", sound: { videoId: 'dNPaf2D3TSE', startTime: 326 } },
+                    { id: 2, title: "Rebel Without a Pause", artist: "Public Enemy", year: 1987, x: 0.25, y: 0.6, sample: "The break is chopped and layered to create a chaotic, energetic rhythm, defining early Public Enemy.", sound: { videoId: '21sK74_prJA', startTime: 53 } },
+                    { id: 3, title: "Freedom! '90", artist: "George Michael", year: 1990, x: 0.7, y: 0.7, sample: "A clean loop of the break drives this pop anthem, giving it a powerful, rhythmic foundation.", sound: { videoId: 'diYAc7gB-0A', startTime: 0 } },
+                    { id: 4, title: "Let Me Ride", artist: "Dr. Dre", year: 1992, x: 0.3, y: 0.3, sample: "The break forms the core of this G-funk classic, providing its signature laid-back groove.", sound: { videoId: '3-S2s_x2vjU', startTime: 32 } },
+                    { id: 5, title: "Run's House", artist: "Run-DMC", year: 1988, x: 0.75, y: 0.35, sample: "The unmistakable groove powers this hip-hop staple, showcasing its versatility.", sound: { videoId: '22gGAY82A6A', startTime: 0 } }
                 ]
             }
         };
@@ -341,6 +365,22 @@
             return null;
         }
 
+        // --- Typewriter Functionality ---
+        function typeWriter(text, element) {
+            if (typewriterTimeout) {
+                clearTimeout(typewriterTimeout);
+            }
+            typewriterIndex = 0;
+            currentTypewriterText = text;
+            typewriterElement = element;
+            element.innerHTML = ''; // Clear previous text
+            element.style.animation = 'none'; // Reset animation
+            // Force reflow to re-apply animation
+            void element.offsetWidth; 
+            element.style.animation = `typing ${currentTypewriterText.length * 0.05}s steps(${currentTypewriterText.length}, end) forwards, blink-caret .75s step-end infinite`;
+            element.textContent = currentTypewriterText; // Set full text immediately for animation to clip
+        }
+
         canvas.addEventListener('mousemove', (e) => {
             if (!ytPlayer) return;
 
@@ -358,8 +398,18 @@
                 hoverTooltip.innerHTML = `
                     <h3 class="text-xl font-bold text-cyan-300">${star.title}</h3>
                     <p>${star.artist}</p>
-                    <p class="text-sm text-gray-400 mt-1">Released: ${star.year}</p>
+                    <p class="text-sm text-gray-400 mt-2">Released: ${star.year}</p>
+                    <p id="typewriter-output" class="text-sm text-gray-300 mt-2 typewriter-text"></p>
                 `;
+                typewriterElement = document.getElementById('typewriter-output');
+
+
+                // Only trigger typewriter if a new star is hovered or content is different
+                if (star.id !== lastHoveredStarId || currentTypewriterText !== star.sample) {
+                    typeWriter(star.sample, typewriterElement);
+                    playSnippet(star);
+                    lastHoveredStarId = star.id;
+                }
                 
                 let x = star.x * canvas.width + 20;
                 let y = star.y * canvas.height;
@@ -375,15 +425,20 @@
                 hoverTooltip.style.top = `${y}px`;
                 hoverTooltip.classList.add('active');
 
-                if (star.id !== lastHoveredStarId) {
-                    playSnippet(star);
-                    lastHoveredStarId = star.id;
-                }
             } else {
                 canvas.style.cursor = 'default';
                 hoveredStar = null;
                 hoverTooltip.classList.remove('active'); // Hide tooltip
                 
+                // Stop typewriter animation and clear content
+                if (typewriterTimeout) {
+                    clearTimeout(typewriterTimeout);
+                }
+                if (typewriterElement) {
+                    typewriterElement.textContent = '';
+                    typewriterElement.style.animation = 'none';
+                }
+
                 if(lastHoveredStarId !== null) {
                     if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
                         ytPlayer.pauseVideo();
@@ -467,8 +522,7 @@
         });
 
     </script>
-    <!-- Load the YouTube Iframe API -->
-    <script src="https://www.youtube.com/iframe_api"></script>
+    <!-- Load the YouTube Iframe API --><script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
 
