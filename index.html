@@ -104,7 +104,7 @@
             50% { border-color: cyan; } /* Changed to cyan to match theme */
         }
         
-        /* NEW: Sample button styles */
+        /* Sample button styles */
         .sample-button {
             background: rgba(0, 255, 255, 0.1);
             border: 1px solid rgba(0, 255, 255, 0.3);
@@ -168,9 +168,8 @@
         let typewriterTimeout;
         let typewriterIndex = 0;
         
-        // NEW: Timeout for hiding tooltip
+        // Timeout for hiding tooltip
         let tooltipHideTimeout;
-
 
         // --- DATA ---
         const constellations = {
@@ -211,7 +210,7 @@
             }
         }
         
-        // NEW: Global function to be called from onclick attribute
+        // Global function to be called from onclick attribute
         function triggerSample(starId, sampleIndex) {
             if (!activeConstellation) return;
             const star = activeConstellation.stars.find(s => s.id === starId);
@@ -219,7 +218,7 @@
                 playSnippet(star.sound[sampleIndex]);
             }
         }
-        window.triggerSample = triggerSample; // Make it accessible from the global scope
+        window.triggerSample = triggerSample;
 
         function playSnippet(soundObject) {
             if (!ytPlayer || !soundObject || typeof ytPlayer.loadVideoById !== 'function') return;
@@ -404,6 +403,53 @@
             }
             type();
         }
+        
+        function showTooltip(star) {
+            if (star.id === lastHoveredStarId) return; // Don't re-render if it's the same star
+
+            clearTimeout(tooltipHideTimeout);
+            canvas.style.cursor = 'pointer';
+            hoveredStar = star;
+            
+            let tooltipHTML = `
+                <h3 class="text-xl font-bold text-cyan-300">${star.title}</h3>
+                <p>${star.artist}</p>
+                <p class="text-sm text-gray-400 mt-2">Released: ${star.year}</p>
+                <p id="typewriter-output" class="text-sm text-gray-300 mt-2 typewriter-text"></p>
+            `;
+            
+            if (star.sound && star.sound.length > 1) {
+                tooltipHTML += '<div class="mt-2 flex flex-col gap-2">';
+                star.sound.forEach((sample, index) => {
+                    tooltipHTML += `<button onclick="triggerSample(${star.id}, ${index})" class="sample-button">Play: ${sample.name}</button>`;
+                });
+                tooltipHTML += '</div>';
+            }
+
+            hoverTooltip.innerHTML = tooltipHTML;
+            const typewriterElement = document.getElementById('typewriter-output');
+            
+            typeWriter(star.sample, typewriterElement);
+            
+            if (star.sound && star.sound.length === 1) {
+                playSnippet(star.sound[0]);
+            }
+            lastHoveredStarId = star.id;
+
+            let x = star.x * canvas.width + 20;
+            let y = star.y * canvas.height;
+
+            if (x + hoverTooltip.offsetWidth > window.innerWidth - 20) {
+                x = star.x * canvas.width - hoverTooltip.offsetWidth - 20;
+            }
+             if (y + hoverTooltip.offsetHeight > window.innerHeight - 20) {
+                y = window.innerHeight - hoverTooltip.offsetHeight - 20;
+            }
+
+            hoverTooltip.style.left = `${x}px`;
+            hoverTooltip.style.top = `${y}px`;
+            hoverTooltip.classList.add('active');
+        }
 
         function hideTooltipAndStopAudio() {
             canvas.style.cursor = 'default';
@@ -420,75 +466,24 @@
             }
         }
 
+        // --- Event Handlers ---
         canvas.addEventListener('mousemove', (e) => {
             if (!ytPlayer) return;
-
             const rect = canvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
-            
             const star = getStarAtPos(mouseX, mouseY);
             
             if (star) {
-                clearTimeout(tooltipHideTimeout); // NEW: Prevent hiding
-                canvas.style.cursor = 'pointer';
-                hoveredStar = star;
-                
-                if (star.id !== lastHoveredStarId) {
-                    let tooltipHTML = `
-                        <h3 class="text-xl font-bold text-cyan-300">${star.title}</h3>
-                        <p>${star.artist}</p>
-                        <p class="text-sm text-gray-400 mt-2">Released: ${star.year}</p>
-                        <p id="typewriter-output" class="text-sm text-gray-300 mt-2 typewriter-text"></p>
-                    `;
-                    
-                    if (star.sound && star.sound.length > 1) {
-                        tooltipHTML += '<div class="mt-2 flex flex-col gap-2">';
-                        star.sound.forEach((sample, index) => {
-                            tooltipHTML += `<button onclick="triggerSample(${star.id}, ${index})" class="sample-button">Play: ${sample.name}</button>`;
-                        });
-                        tooltipHTML += '</div>';
-                    }
-
-                    hoverTooltip.innerHTML = tooltipHTML;
-                    const typewriterElement = document.getElementById('typewriter-output');
-                    
-                    typeWriter(star.sample, typewriterElement);
-                    
-                    if (star.sound && star.sound.length === 1) {
-                        playSnippet(star.sound[0]);
-                    }
-                    lastHoveredStarId = star.id;
-                }
-                
-                let x = star.x * canvas.width + 20;
-                let y = star.y * canvas.height;
-
-                if (x + hoverTooltip.offsetWidth > window.innerWidth - 20) {
-                    x = star.x * canvas.width - hoverTooltip.offsetWidth - 20;
-                }
-                 if (y + hoverTooltip.offsetHeight > window.innerHeight - 20) {
-                    y = window.innerHeight - hoverTooltip.offsetHeight - 20;
-                }
-
-                hoverTooltip.style.left = `${x}px`;
-                hoverTooltip.style.top = `${y}px`;
-                hoverTooltip.classList.add('active');
-
+                clearTimeout(tooltipHideTimeout);
+                showTooltip(star);
             } else {
-                // NEW: Use a timeout to delay hiding
                 tooltipHideTimeout = setTimeout(hideTooltipAndStopAudio, 200);
             }
         });
 
-        // NEW: Add listeners to the tooltip itself
-        hoverTooltip.addEventListener('mouseenter', () => {
-            clearTimeout(tooltipHideTimeout);
-        });
-
-        hoverTooltip.addEventListener('mouseleave', () => {
-            hideTooltipAndStopAudio();
-        });
+        hoverTooltip.addEventListener('mouseenter', () => clearTimeout(tooltipHideTimeout));
+        hoverTooltip.addEventListener('mouseleave', () => hideTooltipAndStopAudio());
 
         function loadConstellation(key) {
             activeConstellation = constellations[key];
