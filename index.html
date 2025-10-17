@@ -89,17 +89,12 @@
 
         /* Typewriter effect styles */
         .typewriter-text {
-            overflow: hidden; /* Ensures the text is hidden until typed */
             white-space: normal; /* Allows text to wrap */
-            border-right: .15em solid orange; /* The blinking cursor */
-            animation: typing 3s steps(30, end) forwards, blink-caret .75s step-end infinite;
+            border-right: .15em solid cyan; /* The blinking cursor */
+            animation: blink-caret .75s step-end infinite;
             display: inline-block; /* Essential for text wrapping with typewriter */
-        }
-
-        /* Typing animation */
-        @keyframes typing {
-            from { width: 0 }
-            to { width: 100% }
+            vertical-align: bottom; /* Aligns cursor nicely */
+            min-height: 1em; /* Prevents layout jump */
         }
 
         /* The typewriter cursor effect */
@@ -371,14 +366,16 @@
                 clearTimeout(typewriterTimeout);
             }
             typewriterIndex = 0;
-            currentTypewriterText = text;
-            typewriterElement = element;
             element.innerHTML = ''; // Clear previous text
-            element.style.animation = 'none'; // Reset animation
-            // Force reflow to re-apply animation
-            void element.offsetWidth; 
-            element.style.animation = `typing ${currentTypewriterText.length * 0.05}s steps(${currentTypewriterText.length}, end) forwards, blink-caret .75s step-end infinite`;
-            element.textContent = currentTypewriterText; // Set full text immediately for animation to clip
+            
+            function type() {
+                if (typewriterIndex < text.length) {
+                    element.innerHTML += text.charAt(typewriterIndex);
+                    typewriterIndex++;
+                    typewriterTimeout = setTimeout(type, 30); // Typing speed
+                }
+            }
+            type();
         }
 
         canvas.addEventListener('mousemove', (e) => {
@@ -404,8 +401,8 @@
                 typewriterElement = document.getElementById('typewriter-output');
 
 
-                // Only trigger typewriter if a new star is hovered or content is different
-                if (star.id !== lastHoveredStarId || currentTypewriterText !== star.sample) {
+                // Only trigger typewriter if a new star is hovered
+                if (star.id !== lastHoveredStarId) {
                     typeWriter(star.sample, typewriterElement);
                     playSnippet(star);
                     lastHoveredStarId = star.id;
@@ -430,13 +427,9 @@
                 hoveredStar = null;
                 hoverTooltip.classList.remove('active'); // Hide tooltip
                 
-                // Stop typewriter animation and clear content
+                // Stop typewriter animation
                 if (typewriterTimeout) {
                     clearTimeout(typewriterTimeout);
-                }
-                if (typewriterElement) {
-                    typewriterElement.textContent = '';
-                    typewriterElement.style.animation = 'none';
                 }
 
                 if(lastHoveredStarId !== null) {
