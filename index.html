@@ -45,33 +45,6 @@
             pointer-events: auto;
         }
         
-        /* Glass morphism effect for the info panel */
-        .info-panel {
-            background: rgba(10, 10, 25, 0.4);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
-            transform: translateX(110%);
-        }
-
-        .info-panel.active {
-            transform: translateX(0);
-        }
-
-        /* Custom scrollbar for info panel */
-        .info-panel-content::-webkit-scrollbar {
-            width: 6px;
-        }
-        .info-panel-content::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .info-panel-content::-webkit-scrollbar-thumb {
-            background-color: rgba(0, 200, 255, 0.3);
-            border-radius: 10px;
-            border: 3px solid transparent;
-        }
-        
         .nav-button {
             transition: all 0.3s ease;
             border: 1px solid rgba(0, 200, 255, 0.3);
@@ -89,6 +62,29 @@
             left: -9999px;
             width: 1px;
             height: 1px;
+        }
+
+        /* NEW: Liquid Glass Tooltip */
+        .hover-tooltip {
+            position: absolute;
+            width: 250px;
+            background: rgba(10, 10, 25, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            visibility: hidden;
+        }
+        .hover-tooltip.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            visibility: visible;
         }
     </style>
 </head>
@@ -115,40 +111,18 @@
         <nav id="constellation-nav" class="flex flex-wrap justify-center gap-3 mb-8">
             <!-- Navigation buttons will be injected by JS -->
         </nav>
-
-        <!-- Main interactive area for pointer events -->
-        <main class="flex-grow w-full">
-            <!-- The canvas is in the background, this area is just for capturing events -->
-        </main>
     </div>
 
-    <!-- Song Info Panel -->
-    <aside id="info-panel" class="info-panel fixed top-0 right-0 h-full w-full max-w-sm p-6 rounded-l-2xl shadow-2xl">
-        <button id="close-panel" class="absolute top-4 right-4 text-gray-300 hover:text-white transition-colors">&times;</button>
-        <div id="info-panel-content" class="h-full overflow-y-auto pr-2">
-            <h2 id="song-title" class="text-3xl font-bold text-cyan-300 mb-2"></h2>
-            <p id="song-artist" class="text-xl text-white mb-4"></p>
-            <p id="song-year" class="text-md text-gray-400 mb-6"></p>
-            <div class="border-t border-cyan-500/20 pt-4">
-                <h3 class="text-lg font-semibold text-gray-200 mb-2">The Connection</h3>
-                <p id="song-sample" class="text-gray-300 italic bg-black/20 p-4 rounded-lg"></p>
-            </div>
-            <div id="source-info" class="mt-6 border-t border-cyan-500/20 pt-4">
-                 <h3 class="text-lg font-semibold text-gray-200 mb-2">Source Sample From</h3>
-                 <p id="source-song" class="text-gray-300"></p>
-            </div>
-        </div>
-    </aside>
-
+    <!-- NEW: Tooltip element -->
+    <div id="hover-tooltip" class="hover-tooltip"></div>
+    
     <!-- YouTube player will be injected here -->
     <div id="youtube-player"></div>
 
     <script>
         const canvas = document.getElementById('constellation-canvas');
         const ctx = canvas.getContext('2d');
-
-        const infoPanel = document.getElementById('info-panel');
-        const closePanelBtn = document.getElementById('close-panel');
+        const hoverTooltip = document.getElementById('hover-tooltip');
         
         let stars = [];
         let hoveredStar = null;
@@ -164,7 +138,7 @@
                 name: "The 'Amen Break'",
                 stars: [
                     { id: 1, title: "Amen, Brother", artist: "The Winstons", year: 1969, x: 0.5, y: 0.5, isSource: true, sample: "The foundational 6-second drum solo.", sound: { videoId: 'GxZuq57_bYM', startTime: 86, endTime: 92 } },
-                    { id: 2, title: "Straight Outta Compton", artist: "N.W.A.", year: 1988, x: 0.3, y: 0.35, sample: "The iconic drum loop provides the track's backbone.", sound: { videoId: '33jyoyJNa2c', startTime: 4, endTime: 8 } },
+                    { id: 2, title: "Straight Outta Compton", artist: "N.W.A.", year: 1988, x: 0.3, y: 0.35, sample: "The iconic drum loop provides the track's backbone.", sound: { videoId: 'TMZi25Pq3T8', startTime: 0, endTime: 4 } },
                     { id: 3, title: "King of the Beats", artist: "Mantronix", year: 1988, x: 0.7, y: 0.25, sample: "One of the earliest hip-hop tracks to popularize the break.", sound: { videoId: 'WzgODI4osy4', startTime: 19, endTime: 23 } },
                     { id: 4, title: "I Desire", artist: "Salt-N-Pepa", year: 1986, x: 0.65, y: 0.7, sample: "The break is pitched up and sped up, giving the track its energy.", sound: { videoId: 'oJ3yleK136k', startTime: 11, endTime: 15 } },
                     { id: 5, title: "Pigs", artist: "Tyler, The Creator", year: 2013, x: 0.35, y: 0.8, sample: "A modern usage, showing the break's timeless appeal in pop music.", sound: { videoId: 'gmr4iZ5dimY', startTime: 0, endTime: 10 } }
@@ -184,9 +158,14 @@
 
         // --- YOUTUBE PLAYER SETUP ---
         function onYouTubeIframeAPIReady() {
-            // This function is called automatically by the YouTube script.
-            // It just signals that the API is ready to be used.
             isYTAPiReady = true;
+            const startBtn = document.getElementById('start-audio-btn');
+            const loadingSubtext = document.getElementById('loading-subtext');
+            if (startBtn) {
+                startBtn.disabled = false;
+                startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                loadingSubtext.textContent = 'Click to enable audio and begin your exploration.';
+            }
         }
 
         function playSnippet(star) {
@@ -197,17 +176,14 @@
             const { videoId, startTime, endTime } = star.sound;
             const duration = (endTime - startTime) * 1000;
 
-            ytPlayer.loadVideoById({
-                videoId: videoId,
-                startSeconds: startTime,
-                endSeconds: endTime
-            });
+            ytPlayer.loadVideoById({ videoId, startSeconds: startTime, endSeconds: endTime });
+            ytPlayer.playVideo(); 
 
             snippetTimeout = setTimeout(() => {
                 if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
                     ytPlayer.pauseVideo();
                 }
-            }, duration);
+            }, duration > 0 ? duration : 1000); // Ensure a minimum duration
         }
 
         // --- SETUP & SIZING ---
@@ -233,7 +209,6 @@
             ctx.fillStyle = star.isSource ? 'rgba(255, 255, 220, 1)' : 'rgba(200, 255, 255, 1)';
             ctx.fill();
             ctx.closePath();
-
             ctx.shadowBlur = 0;
         }
 
@@ -258,9 +233,7 @@
                     
                     ctx.save();
                     let angle = Math.atan2(ey - sy, ex - sx);
-                    if (ex < sx) {
-                        angle += Math.PI;
-                    }
+                    if (ex < sx) { angle += Math.PI; }
                     ctx.translate((sx + ex) / 2, (sy + ey) / 2);
                     ctx.rotate(angle);
                     ctx.textAlign = 'center';
@@ -272,17 +245,6 @@
             });
         }
         
-        function drawHoveredStarTitle() {
-            if (hoveredStar) {
-                const x = hoveredStar.x * canvas.width;
-                const y = hoveredStar.y * canvas.height;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                ctx.font = '14px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText(hoveredStar.title, x, y - 25);
-            }
-        }
-
         function createBackgroundStars() {
             for (let i = 0; i < 200; i++) {
                 stars.push({
@@ -308,13 +270,11 @@
             });
         }
 
-
         function draw() {
             drawBackground();
             if (activeConstellation) {
                 drawLines(activeConstellation);
                 activeConstellation.stars.forEach(drawStar);
-                drawHoveredStarTitle();
             }
         }
         
@@ -329,9 +289,9 @@
             for (const star of activeConstellation.stars) {
                 const starX = star.x * canvas.width;
                 const starY = star.y * canvas.height;
-                const radius = star.isSource ? 12 : 6;
+                const radius = (star.isSource ? 12 : 6) * 1.5; // Use a slightly larger hit area
                 const distance = Math.sqrt((starX - x) ** 2 + (starY - y) ** 2);
-                if (distance < radius * 2) {
+                if (distance < radius) {
                     return star;
                 }
             }
@@ -350,6 +310,28 @@
             if (star) {
                 canvas.style.cursor = 'pointer';
                 hoveredStar = star;
+                
+                // NEW: Update and show tooltip
+                hoverTooltip.innerHTML = `
+                    <h3 class="text-xl font-bold text-cyan-300">${star.title}</h3>
+                    <p>${star.artist}</p>
+                    <p class="text-sm text-gray-400 mt-1">Released: ${star.year}</p>
+                `;
+                
+                let x = star.x * canvas.width + 20;
+                let y = star.y * canvas.height;
+
+                if (x + hoverTooltip.offsetWidth > window.innerWidth - 20) {
+                    x = star.x * canvas.width - hoverTooltip.offsetWidth - 20;
+                }
+                 if (y + hoverTooltip.offsetHeight > window.innerHeight - 20) {
+                    y = window.innerHeight - hoverTooltip.offsetHeight - 20;
+                }
+
+                hoverTooltip.style.left = `${x}px`;
+                hoverTooltip.style.top = `${y}px`;
+                hoverTooltip.classList.add('active');
+
                 if (star.id !== lastHoveredStarId) {
                     playSnippet(star);
                     lastHoveredStarId = star.id;
@@ -357,6 +339,8 @@
             } else {
                 canvas.style.cursor = 'default';
                 hoveredStar = null;
+                hoverTooltip.classList.remove('active'); // Hide tooltip
+                
                 if(lastHoveredStarId !== null) {
                     if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
                         ytPlayer.pauseVideo();
@@ -367,41 +351,10 @@
             }
         });
 
-        canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
-            const star = getStarAtPos(mouseX, mouseY);
-            if (star) {
-                updateInfoPanel(star);
-                infoPanel.classList.add('active');
-            }
-        });
-
-        closePanelBtn.addEventListener('click', () => {
-            infoPanel.classList.remove('active');
-        });
-
-        function updateInfoPanel(star) {
-            document.getElementById('song-title').textContent = star.title;
-            document.getElementById('song-artist').textContent = star.artist;
-            document.getElementById('song-year').textContent = `Released: ${star.year}`;
-            document.getElementById('song-sample').textContent = star.sample;
-            
-            const sourceInfoDiv = document.getElementById('source-info');
-            if (star.isSource) {
-                 sourceInfoDiv.style.display = 'none';
-            } else {
-                const source = activeConstellation.stars.find(s => s.isSource);
-                document.getElementById('source-song').textContent = `${source.title} by ${source.artist} (${source.year})`;
-                sourceInfoDiv.style.display = 'block';
-            }
-        }
+        // REMOVED: Click listener for the side panel is no longer needed.
 
         function loadConstellation(key) {
             activeConstellation = constellations[key];
-            infoPanel.classList.remove('active');
             
             document.querySelectorAll('.nav-button').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.key === key);
@@ -426,25 +379,19 @@
             const loadingText = document.getElementById('loading-text');
             const loadingSubtext = document.getElementById('loading-subtext');
             
-            startBtn.addEventListener('click', () => {
-                if (!isYTAPiReady) {
-                    loadingSubtext.textContent = 'API is still loading, please wait a second...';
-                    setTimeout(() => { startBtn.click() }, 1000); // Retry after 1s
-                    return;
-                }
+            startBtn.disabled = true;
+            startBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            loadingSubtext.textContent = 'Loading YouTube Player API...';
 
+            startBtn.addEventListener('click', () => {
                 loadingText.textContent = 'Initializing Player...';
                 loadingSubtext.textContent = 'Please wait a moment.';
                 startBtn.style.display = 'none';
 
-                // Create the player inside the user click event to satisfy autoplay policies
                 ytPlayer = new YT.Player('youtube-player', {
                     height: '1',
                     width: '1',
-                    playerVars: {
-                        'autoplay': 1,
-                        'controls': 0
-                    },
+                    playerVars: { 'autoplay': 1, 'controls': 0 },
                     events: {
                         'onReady': () => {
                             console.log('YouTube Player is ready.');
