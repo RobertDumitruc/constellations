@@ -27,22 +27,6 @@
             z-index: 1;
             background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
         }
-        
-        /* NEW: Audio Visualizer Canvas */
-        #audio-visualizer-canvas {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 120px; /* Increased height for better visual effect */
-            z-index: 5;
-            pointer-events: none; /* Allows clicks to pass through */
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-        #audio-visualizer-canvas.active {
-            opacity: 1;
-        }
 
         .content-overlay {
             position: relative;
@@ -133,8 +117,6 @@
     </div>
 
     <canvas id="constellation-canvas"></canvas>
-    <!-- NEW: Visualizer Canvas -->
-    <canvas id="audio-visualizer-canvas"></canvas>
 
     <div class="content-overlay">
         <!-- Header --><header class="text-center mb-8">
@@ -155,9 +137,6 @@
         const canvas = document.getElementById('constellation-canvas');
         const ctx = canvas.getContext('2d');
         const hoverTooltip = document.getElementById('hover-tooltip');
-        // NEW: Visualizer variables
-        const visualizerCanvas = document.getElementById('audio-visualizer-canvas');
-        const visualizerCtx = visualizerCanvas.getContext('2d');
         
         let stars = [];
         let hoveredStar = null;
@@ -172,10 +151,6 @@
         let typewriterTimeout;
         let typewriterIndex = 0;
 
-        // NEW: Visualizer state
-        let isVisualizerActive = false;
-        let visualizerFrameCount = 0;
-
 
         // --- DATA ---
         const constellations = {
@@ -186,9 +161,9 @@
                     { id: 2, title: "Straight Outta Compton", artist: "N.W.A.", year: 1988, x: 0.3, y: 0.35, sample: "The iconic drum loop provides the track's raw backbone, defining the West Coast sound.", sound: { videoId: 'TMZi25Pq3T8', startTime: 4 } },
                     { id: 3, title: "King of the Beats", artist: "Mantronix", year: 1988, x: 0.7, y: 0.25, sample: "One of the earliest hip-hop tracks to heavily feature and popularize the Amen Break.", sound: { videoId: 'WzgODI4osy4', startTime: 19 } },
                     { id: 4, title: "I Desire", artist: "Salt-N-Pepa", year: 1986, x: 0.65, y: 0.7, sample: "The break is pitched down and slowed down, giving the track its energy and rhythm.", sound: { videoId: 'oJ3yleK136k', startTime: 3 } },
-                    { id: 5, title: "Pigs", artist: "Tyler, The Creator", year: 2013, x: 0.35, y: 0.8, sample: "A modern usage, showing the break's timeless appeal and versatility across genres.", sound: { videoId: 'gmr4iZ5dimY', startTime: 0 } },
+                    { id: 5, title: "Pigs", artist: "Tyler, The Creator", year: 2013, x: 0.35, y: 0.75, sample: "A modern usage, showing the break's timeless appeal and versatility across genres.", sound: { videoId: 'gmr4iZ5dimY', startTime: 0 } },
                     { id: 6, title: "Sugar On My Tongue", artist: "Tyler, The Creator", year: 2011, x: 0.85, y: 0.45, sample: "Features the wailing sample of the driving beat from Mantronix's 'King of the Beats'.", sound: { videoId: 'ljHdccyQbT4', startTime: 139 }, connectsTo: 3 },
-                    { id: 7, title: "The Mission", artist: "Special Ed", year: 1990, x: 0.7, y: 0.6, sample: "The lyrics of 'I desire' are featured in the first few seconds of this song.", sound: { videoId: 'kt6JowKz4E4', startTime: 2 }, connectsTo: 4 },
+                    { id: 7, title: "The Mission", artist: "Special Ed", year: 1990, x: 0.74, y: 0.6, sample: "The lyrics of 'I desire' are featured in the first few seconds of this song.", sound: { videoId: 'kt6JowKz4E4', startTime: 2 }, connectsTo: 4 },
                 ]
             },
             "Funky Drummer": {
@@ -220,9 +195,6 @@
 
             clearTimeout(snippetTimeout);
             clearInterval(volumeFadeInterval);
-            
-            isVisualizerActive = true; // NEW: Activate visualizer
-            visualizerCanvas.classList.add('active');
 
             const { videoId, startTime } = star.sound;
             const fixedDurationSeconds = 10;
@@ -268,8 +240,6 @@
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            visualizerCanvas.width = window.innerWidth; // NEW: Resize visualizer
-            visualizerCanvas.height = 120;
             draw();
         }
 
@@ -351,33 +321,6 @@
             });
         }
 
-        // NEW: Draw Visualizer Function
-        function drawVisualizer() {
-            visualizerCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
-            
-            const bars = 64;
-            const barWidth = visualizerCanvas.width / bars;
-            const maxBarHeight = visualizerCanvas.height * 0.8;
-
-            for (let i = 0; i < bars; i++) {
-                // Use a sine wave for a smooth, pulsing animation
-                const amplitude = (Math.sin(visualizerFrameCount * 0.05 + i * 0.2) + 1) / 2;
-                const barHeight = amplitude * maxBarHeight + 5; // Add minimum height
-
-                const x = i * barWidth;
-                const y = visualizerCanvas.height - barHeight;
-
-                // Create a gradient for the bars
-                const gradient = visualizerCtx.createLinearGradient(x, y, x, visualizerCanvas.height);
-                gradient.addColorStop(0, 'rgba(0, 255, 255, 0.7)');
-                gradient.addColorStop(1, 'rgba(0, 100, 150, 0.1)');
-
-                visualizerCtx.fillStyle = gradient;
-                visualizerCtx.fillRect(x, y, barWidth - 2, barHeight);
-            }
-        }
-
-
         function draw() {
             drawBackground();
             if (activeConstellation) {
@@ -388,11 +331,6 @@
         
         function animate() {
             draw();
-            // NEW: Animate visualizer if active
-            if (isVisualizerActive) {
-                drawVisualizer();
-                visualizerFrameCount++;
-            }
             requestAnimationFrame(animate);
         }
         
@@ -478,9 +416,6 @@
                     if (typewriterTimeout) { clearTimeout(typewriterTimeout); }
                     if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') { ytPlayer.pauseVideo(); }
                     
-                    isVisualizerActive = false; // NEW: Deactivate visualizer
-                    visualizerCanvas.classList.remove('active');
-
                     clearTimeout(snippetTimeout);
                     clearInterval(volumeFadeInterval);
                     lastHoveredStarId = null;
