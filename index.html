@@ -142,7 +142,8 @@
                     { id: 2, title: "Straight Outta Compton", artist: "N.W.A.", year: 1988, x: 0.3, y: 0.35, sample: "The iconic drum loop provides the track's backbone.", sound: { videoId: 'TMZi25Pq3T8', startTime: 4 } },
                     { id: 3, title: "King of the Beats", artist: "Mantronix", year: 1988, x: 0.7, y: 0.25, sample: "One of the earliest hip-hop tracks to popularize the break.", sound: { videoId: 'WzgODI4osy4', startTime: 19 } },
                     { id: 4, title: "I Desire", artist: "Salt-N-Pepa", year: 1986, x: 0.65, y: 0.7, sample: "The break is pitched up and sped up, giving the track its energy.", sound: { videoId: 'oJ3yleK136k', startTime: 11 } },
-                    { id: 5, title: "Pigs", artist: "Tyler, The Creator", year: 2013, x: 0.35, y: 0.8, sample: "A modern usage, showing the break's timeless appeal in pop music.", sound: { videoId: 'gmr4iZ5dimY', startTime: 0 } }
+                    { id: 5, title: "Pigs", artist: "Tyler, The Creator", year: 2013, x: 0.35, y: 0.8, sample: "A modern usage, showing the break's timeless appeal in pop music.", sound: { videoId: 'gmr4iZ5dimY', startTime: 0 } },
+                    { id: 6, title: "Sugar On My Tongue", artist: "Tyler, The Creator", year: 2025, x: 0.85, y: 0.45, sample: "Samples the driving beat from 'King of the Beats'.", sound: { videoId: 'ljHdccyQbT4', startTime: 139 }, connectsTo: 3 }
                 ]
             },
             "Funky Drummer": {
@@ -252,33 +253,38 @@
         function drawLines(constellation) {
             const sourceStar = constellation.stars.find(s => s.isSource);
             if (!sourceStar) return;
-            const sx = sourceStar.x * canvas.width;
-            const sy = sourceStar.y * canvas.height;
 
-            constellation.stars.forEach(star => {
-                if (!star.isSource) {
-                    const ex = star.x * canvas.width;
-                    const ey = star.y * canvas.height;
+            constellation.stars.forEach(endStar => {
+                if (endStar.isSource) return;
 
-                    ctx.beginPath();
-                    ctx.moveTo(sx, sy);
-                    ctx.lineTo(ex, ey);
-                    ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                    ctx.closePath();
-                    
-                    ctx.save();
-                    let angle = Math.atan2(ey - sy, ex - sx);
-                    if (ex < sx) { angle += Math.PI; }
-                    ctx.translate((sx + ex) / 2, (sy + ey) / 2);
-                    ctx.rotate(angle);
-                    ctx.textAlign = 'center';
-                    ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
-                    ctx.font = '12px Inter';
-                    ctx.fillText(`— from '${sourceStar.title}'`, 0, -5);
-                    ctx.restore();
-                }
+                const startStarId = endStar.connectsTo || sourceStar.id;
+                const startStar = constellation.stars.find(s => s.id === startStarId);
+
+                if (!startStar) return;
+
+                const sx = startStar.x * canvas.width;
+                const sy = startStar.y * canvas.height;
+                const ex = endStar.x * canvas.width;
+                const ey = endStar.y * canvas.height;
+
+                ctx.beginPath();
+                ctx.moveTo(sx, sy);
+                ctx.lineTo(ex, ey);
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.closePath();
+                
+                ctx.save();
+                let angle = Math.atan2(ey - sy, ex - sx);
+                if (ex < sx) { angle += Math.PI; }
+                ctx.translate((sx + ex) / 2, (sy + ey) / 2);
+                ctx.rotate(angle);
+                ctx.textAlign = 'center';
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
+                ctx.font = '12px Inter';
+                ctx.fillText(`— from '${startStar.title}'`, 0, -5);
+                ctx.restore();
             });
         }
         
