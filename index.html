@@ -130,6 +130,7 @@
         let activeConstellation = null;
         let ytPlayer;
         let snippetTimeout;
+        let volumeFadeInterval;
         let isYTAPiReady = false;
 
         // --- DATA: Define the constellations with sound ---
@@ -137,21 +138,21 @@
             "Amen Break": {
                 name: "The 'Amen Break'",
                 stars: [
-                    { id: 1, title: "Amen, Brother", artist: "The Winstons", year: 1969, x: 0.5, y: 0.5, isSource: true, sample: "The foundational 6-second drum solo.", sound: { videoId: 'GxZuq57_bYM', startTime: 86, endTime: 92 } },
-                    { id: 2, title: "Straight Outta Compton", artist: "N.W.A.", year: 1988, x: 0.3, y: 0.35, sample: "The iconic drum loop provides the track's backbone.", sound: { videoId: 'TMZi25Pq3T8', startTime: 4, endTime: 10 } },
-                    { id: 3, title: "King of the Beats", artist: "Mantronix", year: 1988, x: 0.7, y: 0.25, sample: "One of the earliest hip-hop tracks to popularize the break.", sound: { videoId: 'WzgODI4osy4', startTime: 19, endTime: 23 } },
-                    { id: 4, title: "I Desire", artist: "Salt-N-Pepa", year: 1986, x: 0.65, y: 0.7, sample: "The break is pitched up and sped up, giving the track its energy.", sound: { videoId: 'oJ3yleK136k', startTime: 11, endTime: 15 } },
-                    { id: 5, title: "Pigs", artist: "Tyler, The Creator", year: 2013, x: 0.35, y: 0.8, sample: "A modern usage, showing the break's timeless appeal in pop music.", sound: { videoId: 'gmr4iZ5dimY', startTime: 0, endTime: 10 } }
+                    { id: 1, title: "Amen, Brother", artist: "The Winstons", year: 1969, x: 0.5, y: 0.5, isSource: true, sample: "The foundational 6-second drum solo.", sound: { videoId: 'GxZuq57_bYM', startTime: 86 } },
+                    { id: 2, title: "Straight Outta Compton", artist: "N.W.A.", year: 1988, x: 0.3, y: 0.35, sample: "The iconic drum loop provides the track's backbone.", sound: { videoId: 'TMZi25Pq3T8', startTime: 4 } },
+                    { id: 3, title: "King of the Beats", artist: "Mantronix", year: 1988, x: 0.7, y: 0.25, sample: "One of the earliest hip-hop tracks to popularize the break.", sound: { videoId: 'WzgODI4osy4', startTime: 19 } },
+                    { id: 4, title: "I Desire", artist: "Salt-N-Pepa", year: 1986, x: 0.65, y: 0.7, sample: "The break is pitched up and sped up, giving the track its energy.", sound: { videoId: 'oJ3yleK136k', startTime: 11 } },
+                    { id: 5, title: "Pigs", artist: "Tyler, The Creator", year: 2013, x: 0.35, y: 0.8, sample: "A modern usage, showing the break's timeless appeal in pop music.", sound: { videoId: 'gmr4iZ5dimY', startTime: 0 } }
                 ]
             },
             "Funky Drummer": {
                 name: "The 'Funky Drummer'",
                 stars: [
-                    { id: 1, title: "Funky Drummer", artist: "James Brown", year: 1970, x: 0.5, y: 0.5, isSource: true, sample: "Clyde Stubblefield's legendary drum break.", sound: { videoId: 'dNPaf2D3TSE', startTime: 326, endTime: 331 } },
-                    { id: 2, title: "Rebel Without a Pause", artist: "Public Enemy", year: 1987, x: 0.25, y: 0.6, sample: "The break is chopped and layered to create a chaotic, energetic rhythm.", sound: { videoId: '21sK74_prJA', startTime: 53, endTime: 57 } },
-                    { id: 3, title: "Freedom! '90", artist: "George Michael", year: 1990, x: 0.7, y: 0.7, sample: "A clean loop of the break drives this pop anthem.", sound: { videoId: 'diYAc7gB-0A', startTime: 0, endTime: 5 } },
-                    { id: 4, title: "Let Me Ride", artist: "Dr. Dre", year: 1992, x: 0.3, y: 0.3, sample: "The break forms the core of this G-funk classic.", sound: { videoId: '3-S2s_x2vjU', startTime: 32, endTime: 36 } },
-                    { id: 5, title: "Run's House", artist: "Run-DMC", year: 1988, x: 0.75, y: 0.35, sample: "The unmistakable groove powers this hip-hop staple.", sound: { videoId: '22gGAY82A6A', startTime: 0, endTime: 4 } }
+                    { id: 1, title: "Funky Drummer", artist: "James Brown", year: 1970, x: 0.5, y: 0.5, isSource: true, sample: "Clyde Stubblefield's legendary drum break.", sound: { videoId: 'dNPaf2D3TSE', startTime: 326 } },
+                    { id: 2, title: "Rebel Without a Pause", artist: "Public Enemy", year: 1987, x: 0.25, y: 0.6, sample: "The break is chopped and layered to create a chaotic, energetic rhythm.", sound: { videoId: '21sK74_prJA', startTime: 53 } },
+                    { id: 3, title: "Freedom! '90", artist: "George Michael", year: 1990, x: 0.7, y: 0.7, sample: "A clean loop of the break drives this pop anthem.", sound: { videoId: 'diYAc7gB-0A', startTime: 0 } },
+                    { id: 4, title: "Let Me Ride", artist: "Dr. Dre", year: 1992, x: 0.3, y: 0.3, sample: "The break forms the core of this G-funk classic.", sound: { videoId: '3-S2s_x2vjU', startTime: 32 } },
+                    { id: 5, title: "Run's House", artist: "Run-DMC", year: 1988, x: 0.75, y: 0.35, sample: "The unmistakable groove powers this hip-hop staple.", sound: { videoId: '22gGAY82A6A', startTime: 0 } }
                 ]
             }
         };
@@ -171,19 +172,55 @@
         function playSnippet(star) {
             if (!ytPlayer || !star.sound || typeof ytPlayer.loadVideoById !== 'function') return;
 
+            // Clear any previous timers
             clearTimeout(snippetTimeout);
+            clearInterval(volumeFadeInterval);
             
-            const { videoId, startTime, endTime } = star.sound;
-            const duration = (endTime - startTime) * 1000;
+            const { videoId, startTime } = star.sound;
+            const fixedDurationSeconds = 10;
+            const newEndTime = startTime + fixedDurationSeconds;
+            const durationMs = fixedDurationSeconds * 1000;
 
-            ytPlayer.loadVideoById({ videoId, startSeconds: startTime, endSeconds: endTime });
+            // 1. Set volume to 0 and load video
+            ytPlayer.setVolume(0);
+            ytPlayer.loadVideoById({ videoId, startSeconds: startTime, endSeconds: newEndTime });
             ytPlayer.playVideo(); 
 
-            snippetTimeout = setTimeout(() => {
-                if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
-                    ytPlayer.pauseVideo();
+            // 2. Fade In logic
+            const fadeDuration = 1000; // 1 second for fade in/out
+            const fadeSteps = 20;
+            const volumeStep = 100 / fadeSteps;
+            const stepInterval = fadeDuration / fadeSteps;
+            let currentVolume = 0;
+
+            volumeFadeInterval = setInterval(() => {
+                currentVolume += volumeStep;
+                if (currentVolume >= 100) {
+                    currentVolume = 100;
+                    clearInterval(volumeFadeInterval);
                 }
-            }, duration > 0 ? duration : 1000); // Ensure a minimum duration
+                ytPlayer.setVolume(currentVolume);
+            }, stepInterval);
+
+            // 3. Schedule Fade Out & Stop
+            const fadeOutStartTime = durationMs - fadeDuration;
+            
+            snippetTimeout = setTimeout(() => {
+                // Clear the fade-in interval in case it's still running
+                clearInterval(volumeFadeInterval);
+
+                // Start fade-out
+                volumeFadeInterval = setInterval(() => {
+                    currentVolume -= volumeStep;
+                    if (currentVolume <= 0) {
+                        currentVolume = 0;
+                        ytPlayer.pauseVideo(); // Stop when volume is 0
+                        clearInterval(volumeFadeInterval);
+                    }
+                    ytPlayer.setVolume(currentVolume);
+                }, stepInterval);
+
+            }, fadeOutStartTime > 0 ? fadeOutStartTime : 0);
         }
 
         // --- SETUP & SIZING ---
@@ -346,12 +383,11 @@
                         ytPlayer.pauseVideo();
                     }
                     clearTimeout(snippetTimeout);
+                    clearInterval(volumeFadeInterval);
                     lastHoveredStarId = null;
                 }
             }
         });
-
-        // REMOVED: Click listener for the side panel is no longer needed.
 
         function loadConstellation(key) {
             activeConstellation = constellations[key];
