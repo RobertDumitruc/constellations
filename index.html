@@ -27,6 +27,22 @@
             z-index: 1;
             background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
         }
+        
+        /* NEW: Audio Visualizer Canvas */
+        #audio-visualizer-canvas {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px; /* Increased height for better visual effect */
+            z-index: 5;
+            pointer-events: none; /* Allows clicks to pass through */
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        #audio-visualizer-canvas.active {
+            opacity: 1;
+        }
 
         .content-overlay {
             position: relative;
@@ -64,7 +80,7 @@
             height: 1px;
         }
 
-        /* NEW: Liquid Glass Tooltip */
+        /* Liquid Glass Tooltip */
         .hover-tooltip {
             position: absolute;
             width: 250px;
@@ -117,6 +133,8 @@
     </div>
 
     <canvas id="constellation-canvas"></canvas>
+    <!-- NEW: Visualizer Canvas -->
+    <canvas id="audio-visualizer-canvas"></canvas>
 
     <div class="content-overlay">
         <!-- Header --><header class="text-center mb-8">
@@ -129,7 +147,7 @@
             <!-- Navigation buttons will be injected by JS --></nav>
     </div>
 
-    <!-- NEW: Tooltip element --><div id="hover-tooltip" class="hover-tooltip"></div>
+    <!-- Tooltip element --><div id="hover-tooltip" class="hover-tooltip"></div>
     
     <!-- YouTube player will be injected here --><div id="youtube-player"></div>
 
@@ -137,6 +155,9 @@
         const canvas = document.getElementById('constellation-canvas');
         const ctx = canvas.getContext('2d');
         const hoverTooltip = document.getElementById('hover-tooltip');
+        // NEW: Visualizer variables
+        const visualizerCanvas = document.getElementById('audio-visualizer-canvas');
+        const visualizerCtx = visualizerCanvas.getContext('2d');
         
         let stars = [];
         let hoveredStar = null;
@@ -150,11 +171,13 @@
         // Typewriter specific variables
         let typewriterTimeout;
         let typewriterIndex = 0;
-        let currentTypewriterText = '';
-        let typewriterElement = null;
+
+        // NEW: Visualizer state
+        let isVisualizerActive = false;
+        let visualizerFrameCount = 0;
 
 
-        // --- DATA: Define the constellations with sound ---
+        // --- DATA ---
         const constellations = {
             "Amen Break": {
                 name: "The 'Amen Break'",
@@ -195,22 +218,22 @@
         function playSnippet(star) {
             if (!ytPlayer || !star.sound || typeof ytPlayer.loadVideoById !== 'function') return;
 
-            // Clear any previous timers
             clearTimeout(snippetTimeout);
             clearInterval(volumeFadeInterval);
             
+            isVisualizerActive = true; // NEW: Activate visualizer
+            visualizerCanvas.classList.add('active');
+
             const { videoId, startTime } = star.sound;
             const fixedDurationSeconds = 10;
             const newEndTime = startTime + fixedDurationSeconds;
             const durationMs = fixedDurationSeconds * 1000;
 
-            // 1. Set volume to 0 and load video
             ytPlayer.setVolume(0);
             ytPlayer.loadVideoById({ videoId, startSeconds: startTime, endSeconds: newEndTime });
             ytPlayer.playVideo(); 
 
-            // 2. Fade In logic
-            const fadeDuration = 1000; // 1 second for fade in/out
+            const fadeDuration = 1000;
             const fadeSteps = 20;
             const volumeStep = 100 / fadeSteps;
             const stepInterval = fadeDuration / fadeSteps;
@@ -225,24 +248,19 @@
                 ytPlayer.setVolume(currentVolume);
             }, stepInterval);
 
-            // 3. Schedule Fade Out & Stop
             const fadeOutStartTime = durationMs - fadeDuration;
             
             snippetTimeout = setTimeout(() => {
-                // Clear the fade-in interval in case it's still running
                 clearInterval(volumeFadeInterval);
-
-                // Start fade-out
                 volumeFadeInterval = setInterval(() => {
                     currentVolume -= volumeStep;
                     if (currentVolume <= 0) {
                         currentVolume = 0;
-                        ytPlayer.pauseVideo(); // Stop when volume is 0
+                        ytPlayer.pauseVideo();
                         clearInterval(volumeFadeInterval);
                     }
                     ytPlayer.setVolume(currentVolume);
                 }, stepInterval);
-
             }, fadeOutStartTime > 0 ? fadeOutStartTime : 0);
         }
 
@@ -250,6 +268,8 @@
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            visualizerCanvas.width = window.innerWidth; // NEW: Resize visualizer
+            visualizerCanvas.height = 120;
             draw();
         }
 
@@ -262,10 +282,8 @@
             
             ctx.beginPath();
             ctx.arc(x, y, isHovered ? radius * 1.5 : radius, 0, Math.PI * 2);
-            
             ctx.shadowColor = star.isSource ? 'rgba(255, 255, 180, 0.9)' : 'rgba(0, 255, 255, 0.7)';
             ctx.shadowBlur = isHovered ? 30 : 15;
-            
             ctx.fillStyle = star.isSource ? 'rgba(255, 255, 220, 1)' : 'rgba(200, 255, 255, 1)';
             ctx.fill();
             ctx.closePath();
@@ -278,10 +296,8 @@
 
             constellation.stars.forEach(endStar => {
                 if (endStar.isSource) return;
-
                 const startStarId = endStar.connectsTo || sourceStar.id;
                 const startStar = constellation.stars.find(s => s.id === startStarId);
-
                 if (!startStar) return;
 
                 const sx = startStar.x * canvas.width;
@@ -335,6 +351,33 @@
             });
         }
 
+        // NEW: Draw Visualizer Function
+        function drawVisualizer() {
+            visualizerCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+            
+            const bars = 64;
+            const barWidth = visualizerCanvas.width / bars;
+            const maxBarHeight = visualizerCanvas.height * 0.8;
+
+            for (let i = 0; i < bars; i++) {
+                // Use a sine wave for a smooth, pulsing animation
+                const amplitude = (Math.sin(visualizerFrameCount * 0.05 + i * 0.2) + 1) / 2;
+                const barHeight = amplitude * maxBarHeight + 5; // Add minimum height
+
+                const x = i * barWidth;
+                const y = visualizerCanvas.height - barHeight;
+
+                // Create a gradient for the bars
+                const gradient = visualizerCtx.createLinearGradient(x, y, x, visualizerCanvas.height);
+                gradient.addColorStop(0, 'rgba(0, 255, 255, 0.7)');
+                gradient.addColorStop(1, 'rgba(0, 100, 150, 0.1)');
+
+                visualizerCtx.fillStyle = gradient;
+                visualizerCtx.fillRect(x, y, barWidth - 2, barHeight);
+            }
+        }
+
+
         function draw() {
             drawBackground();
             if (activeConstellation) {
@@ -345,6 +388,11 @@
         
         function animate() {
             draw();
+            // NEW: Animate visualizer if active
+            if (isVisualizerActive) {
+                drawVisualizer();
+                visualizerFrameCount++;
+            }
             requestAnimationFrame(animate);
         }
         
@@ -354,7 +402,7 @@
             for (const star of activeConstellation.stars) {
                 const starX = star.x * canvas.width;
                 const starY = star.y * canvas.height;
-                const radius = (star.isSource ? 12 : 6) * 1.5; // Use a slightly larger hit area
+                const radius = (star.isSource ? 12 : 6) * 1.5;
                 const distance = Math.sqrt((starX - x) ** 2 + (starY - y) ** 2);
                 if (distance < radius) {
                     return star;
@@ -363,22 +411,18 @@
             return null;
         }
 
-        // --- Typewriter Functionality ---
         function typeWriter(text, element) {
             if (typewriterTimeout) {
                 clearTimeout(typewriterTimeout);
             }
             typewriterIndex = 0;
-            element.innerHTML = ''; // Clear previous text
+            element.innerHTML = '';
             
             function type() {
                 if (typewriterIndex < text.length) {
                     element.innerHTML += text.charAt(typewriterIndex);
                     typewriterIndex++;
-                    typewriterTimeout = setTimeout(type, 30); // Typing speed
-                } else {
-                    // Optional: remove blinking cursor when done
-                    // element.style.borderRight = 'none';
+                    typewriterTimeout = setTimeout(type, 30);
                 }
             }
             type();
@@ -397,7 +441,6 @@
                 canvas.style.cursor = 'pointer';
                 hoveredStar = star;
                 
-                // Only trigger effects if the star has changed
                 if (star.id !== lastHoveredStarId) {
                     hoverTooltip.innerHTML = `
                         <h3 class="text-xl font-bold text-cyan-300">${star.title}</h3>
@@ -405,14 +448,13 @@
                         <p class="text-sm text-gray-400 mt-2">Released: ${star.year}</p>
                         <p id="typewriter-output" class="text-sm text-gray-300 mt-2 typewriter-text"></p>
                     `;
-                    typewriterElement = document.getElementById('typewriter-output');
+                    const typewriterElement = document.getElementById('typewriter-output');
                     
                     typeWriter(star.sample, typewriterElement);
                     playSnippet(star);
                     lastHoveredStarId = star.id;
                 }
                 
-                // Always update position
                 let x = star.x * canvas.width + 20;
                 let y = star.y * canvas.height;
 
@@ -430,16 +472,15 @@
             } else {
                 canvas.style.cursor = 'default';
                 hoveredStar = null;
-                hoverTooltip.classList.remove('active'); // Hide tooltip
+                hoverTooltip.classList.remove('active');
                 
                 if(lastHoveredStarId !== null) {
-                    // Stop typewriter animation
-                    if (typewriterTimeout) {
-                        clearTimeout(typewriterTimeout);
-                    }
-                    if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
-                        ytPlayer.pauseVideo();
-                    }
+                    if (typewriterTimeout) { clearTimeout(typewriterTimeout); }
+                    if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') { ytPlayer.pauseVideo(); }
+                    
+                    isVisualizerActive = false; // NEW: Deactivate visualizer
+                    visualizerCanvas.classList.remove('active');
+
                     clearTimeout(snippetTimeout);
                     clearInterval(volumeFadeInterval);
                     lastHoveredStarId = null;
@@ -449,7 +490,6 @@
 
         function loadConstellation(key) {
             activeConstellation = constellations[key];
-            
             document.querySelectorAll('.nav-button').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.key === key);
             });
