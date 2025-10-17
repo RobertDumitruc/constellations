@@ -75,7 +75,7 @@
             border-radius: 12px;
             padding: 1rem;
             z-index: 10;
-            pointer-events: none;
+            pointer-events: auto; /* Changed to auto to allow button clicks */
             opacity: 0;
             transform: translateY(10px) scale(0.95);
             transition: opacity 0.2s ease, transform 0.2s ease;
@@ -102,6 +102,23 @@
         @keyframes blink-caret {
             from, to { border-color: transparent }
             50% { border-color: cyan; } /* Changed to cyan to match theme */
+        }
+        
+        /* NEW: Sample button styles */
+        .sample-button {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: #EAEAEA;
+            padding: 4px 8px;
+            width: 100%;
+            border-radius: 6px;
+            font-size: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .sample-button:hover {
+            background: rgba(0, 255, 255, 0.3);
         }
 
     </style>
@@ -150,6 +167,9 @@
         // Typewriter specific variables
         let typewriterTimeout;
         let typewriterIndex = 0;
+        
+        // NEW: Timeout for hiding tooltip
+        let tooltipHideTimeout;
 
 
         // --- DATA ---
@@ -157,23 +177,24 @@
             "Amen Break": {
                 name: "The 'Amen Break'",
                 stars: [
-                    { id: 1, title: "Amen, Brother", artist: "The Winstons", year: 1969, x: 0.5, y: 0.5, isSource: true, sample: "The foundational 6-second drum solo that became one of the most sampled breaks in history.", sound: { videoId: 'GxZuq57_bYM', startTime: 86 } },
-                    { id: 2, title: "Straight Outta Compton", artist: "N.W.A.", year: 1988, x: 0.3, y: 0.35, sample: "The iconic drum loop provides the track's raw backbone, defining the West Coast sound.", sound: { videoId: 'TMZi25Pq3T8', startTime: 4 } },
-                    { id: 3, title: "King of the Beats", artist: "Mantronix", year: 1988, x: 0.7, y: 0.25, sample: "One of the earliest hip-hop tracks to heavily feature and popularize the Amen Break.", sound: { videoId: 'WzgODI4osy4', startTime: 19 } },
-                    { id: 4, title: "I Desire", artist: "Salt-N-Pepa", year: 1986, x: 0.65, y: 0.7, sample: "The break is pitched down and slowed down, giving the track its energy and rhythm.", sound: { videoId: 'oJ3yleK136k', startTime: 3 } },
-                    { id: 5, title: "Pigs", artist: "Tyler, The Creator", year: 2013, x: 0.35, y: 0.75, sample: "A modern usage, showing the break's timeless appeal and versatility across genres.", sound: { videoId: 'gmr4iZ5dimY', startTime: 0 } },
-                    { id: 6, title: "Sugar On My Tongue", artist: "Tyler, The Creator", year: 2011, x: 0.85, y: 0.45, sample: "Features the wailing sample of the driving beat from Mantronix's 'King of the Beats'.", sound: { videoId: 'ljHdccyQbT4', startTime: 139 }, connectsTo: 3 },
-                    { id: 7, title: "The Mission", artist: "Special Ed", year: 1990, x: 0.74, y: 0.6, sample: "The lyrics of 'I desire' are featured in the first few seconds of this song.", sound: { videoId: 'kt6JowKz4E4', startTime: 2 }, connectsTo: 4 },
+                    { id: 1, title: "Amen, Brother", artist: "The Winstons", year: 1969, x: 0.5, y: 0.5, isSource: true, sample: "The foundational 6-second drum solo that became one of the most sampled breaks in history.", sound: [{ name: "Main Sample", videoId: 'GxZuq57_bYM', startTime: 86 }] },
+                    { id: 2, title: "Straight Outta Compton", artist: "N.W.A.", year: 1988, x: 0.3, y: 0.35, sample: "The iconic drum loop provides the track's raw backbone, defining the West Coast sound.", sound: [{ name: "Main Sample", videoId: 'TMZi25Pq3T8', startTime: 4 }] },
+                    { id: 3, title: "King of the Beats", artist: "Mantronix", year: 1988, x: 0.7, y: 0.25, sample: "One of the earliest hip-hop tracks to heavily feature and popularize the Amen Break.", sound: [{ name: "Main Sample", videoId: 'WzgODI4osy4', startTime: 19 }] },
+                    { id: 4, title: "I Desire", artist: "Salt-N-Pepa", year: 1986, x: 0.65, y: 0.7, sample: "The break is pitched down and slowed down, giving the track its energy and rhythm.", sound: [{ name: "Main Sample", videoId: 'oJ3yleK136k', startTime: 3 }] },
+                    { id: 5, title: "Pigs", artist: "Tyler, The Creator", year: 2013, x: 0.35, y: 0.75, sample: "Samples both the Amen Break and the iconic lyrics from Jay-Z's '99 Problems'.", sound: [{ name: "Amen Break", videoId: 'gmr4iZ5dimY', startTime: 0 }, { name: "'99 Problems' Vocals", videoId: 'gmr4iZ5dimY', startTime: 249 }], connectsTo: [1, 8] },
+                    { id: 6, title: "Sugar On My Tongue", artist: "Tyler, The Creator", year: 2011, x: 0.85, y: 0.45, sample: "Features the wailing sample of the driving beat from Mantronix's 'King of the Beats'.", sound: [{ name: "Main Sample", videoId: 'ljHdccyQbT4', startTime: 139 }], connectsTo: 3 },
+                    { id: 7, title: "The Mission", artist: "Special Ed", year: 1990, x: 0.74, y: 0.6, sample: "The lyrics of 'I desire' are featured in the first few seconds of this song.", sound: [{ name: "Main Sample", videoId: 'kt6JowKz4E4', startTime: 2 }], connectsTo: 4 },
+                    { id: 8, title: "99 Problems", artist: "Jay-Z", year: 2003, x: 0.15, y: 0.6, sample: "Built around a sample of 'The Big Beat' by Billy Squier, its drum pattern is iconic.", sound: [{ name: "Main Sample", videoId: '6uikJTnmtgw', startTime: 0 }], isGuest: true }
                 ]
             },
             "Funky Drummer": {
                 name: "The 'Funky Drummer'",
                 stars: [
-                    { id: 1, title: "Funky Drummer", artist: "James Brown", year: 1970, x: 0.5, y: 0.5, isSource: true, sample: "Clyde Stubblefield's legendary drum break, a cornerstone of hip-hop and funk.", sound: { videoId: 'dNPaf2D3TSE', startTime: 326 } },
-                    { id: 2, title: "Rebel Without a Pause", artist: "Public Enemy", year: 1987, x: 0.25, y: 0.6, sample: "The break is chopped and layered to create a chaotic, energetic rhythm, defining early Public Enemy.", sound: { videoId: '21sK74_prJA', startTime: 53 } },
-                    { id: 3, title: "Freedom! '90", artist: "George Michael", year: 1990, x: 0.7, y: 0.7, sample: "A clean loop of the break drives this pop anthem, giving it a powerful, rhythmic foundation.", sound: { videoId: 'diYAc7gB-0A', startTime: 0 } },
-                    { id: 4, title: "Let Me Ride", artist: "Dr. Dre", year: 1992, x: 0.3, y: 0.3, sample: "The break forms the core of this G-funk classic, providing its signature laid-back groove.", sound: { videoId: '3-S2s_x2vjU', startTime: 32 } },
-                    { id: 5, title: "Run's House", artist: "Run-DMC", year: 1988, x: 0.75, y: 0.35, sample: "The unmistakable groove powers this hip-hop staple, showcasing its versatility.", sound: { videoId: '22gGAY82A6A', startTime: 0 } }
+                    { id: 1, title: "Funky Drummer", artist: "James Brown", year: 1970, x: 0.5, y: 0.5, isSource: true, sample: "Clyde Stubblefield's legendary drum break, a cornerstone of hip-hop and funk.", sound: [{ name: "Main Sample", videoId: 'dNPaf2D3TSE', startTime: 326 }] },
+                    { id: 2, title: "Rebel Without a Pause", artist: "Public Enemy", year: 1987, x: 0.25, y: 0.6, sample: "The break is chopped and layered to create a chaotic, energetic rhythm, defining early Public Enemy.", sound: [{ name: "Main Sample", videoId: '21sK74_prJA', startTime: 53 }] },
+                    { id: 3, title: "Freedom! '90", artist: "George Michael", year: 1990, x: 0.7, y: 0.7, sample: "A clean loop of the break drives this pop anthem, giving it a powerful, rhythmic foundation.", sound: [{ name: "Main Sample", videoId: 'diYAc7gB-0A', startTime: 0 }] },
+                    { id: 4, title: "Let Me Ride", artist: "Dr. Dre", year: 1992, x: 0.3, y: 0.3, sample: "The break forms the core of this G-funk classic, providing its signature laid-back groove.", sound: [{ name: "Main Sample", videoId: '3-S2s_x2vjU', startTime: 32 }] },
+                    { id: 5, title: "Run's House", artist: "Run-DMC", year: 1988, x: 0.75, y: 0.35, sample: "The unmistakable groove powers this hip-hop staple, showcasing its versatility.", sound: [{ name: "Main Sample", videoId: '22gGAY82A6A', startTime: 0 }] }
                 ]
             }
         };
@@ -189,14 +210,24 @@
                 loadingSubtext.textContent = 'Click to enable audio and begin your exploration.';
             }
         }
+        
+        // NEW: Global function to be called from onclick attribute
+        function triggerSample(starId, sampleIndex) {
+            if (!activeConstellation) return;
+            const star = activeConstellation.stars.find(s => s.id === starId);
+            if (star && star.sound && star.sound[sampleIndex]) {
+                playSnippet(star.sound[sampleIndex]);
+            }
+        }
+        window.triggerSample = triggerSample; // Make it accessible from the global scope
 
-        function playSnippet(star) {
-            if (!ytPlayer || !star.sound || typeof ytPlayer.loadVideoById !== 'function') return;
+        function playSnippet(soundObject) {
+            if (!ytPlayer || !soundObject || typeof ytPlayer.loadVideoById !== 'function') return;
 
             clearTimeout(snippetTimeout);
             clearInterval(volumeFadeInterval);
 
-            const { videoId, startTime } = star.sound;
+            const { videoId, startTime } = soundObject;
             const fixedDurationSeconds = 10;
             const newEndTime = startTime + fixedDurationSeconds;
             const durationMs = fixedDurationSeconds * 1000;
@@ -252,9 +283,19 @@
             
             ctx.beginPath();
             ctx.arc(x, y, isHovered ? radius * 1.5 : radius, 0, Math.PI * 2);
-            ctx.shadowColor = star.isSource ? 'rgba(255, 255, 180, 0.9)' : 'rgba(0, 255, 255, 0.7)';
+            
+            if (star.isGuest) {
+                ctx.shadowColor = 'rgba(220, 180, 255, 0.9)';
+                ctx.fillStyle = 'rgba(230, 200, 255, 1)';
+            } else if (star.isSource) {
+                ctx.shadowColor = 'rgba(255, 255, 180, 0.9)';
+                ctx.fillStyle = 'rgba(255, 255, 220, 1)';
+            } else {
+                ctx.shadowColor = 'rgba(0, 255, 255, 0.7)';
+                ctx.fillStyle = 'rgba(200, 255, 255, 1)';
+            }
+            
             ctx.shadowBlur = isHovered ? 30 : 15;
-            ctx.fillStyle = star.isSource ? 'rgba(255, 255, 220, 1)' : 'rgba(200, 255, 255, 1)';
             ctx.fill();
             ctx.closePath();
             ctx.shadowBlur = 0;
@@ -266,33 +307,31 @@
 
             constellation.stars.forEach(endStar => {
                 if (endStar.isSource) return;
-                const startStarId = endStar.connectsTo || sourceStar.id;
-                const startStar = constellation.stars.find(s => s.id === startStarId);
-                if (!startStar) return;
-
-                const sx = startStar.x * canvas.width;
-                const sy = startStar.y * canvas.height;
-                const ex = endStar.x * canvas.width;
-                const ey = endStar.y * canvas.height;
-
-                ctx.beginPath();
-                ctx.moveTo(sx, sy);
-                ctx.lineTo(ex, ey);
-                ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                ctx.closePath();
                 
-                ctx.save();
-                let angle = Math.atan2(ey - sy, ex - sx);
-                if (ex < sx) { angle += Math.PI; }
-                ctx.translate((sx + ex) / 2, (sy + ey) / 2);
-                ctx.rotate(angle);
-                ctx.textAlign = 'center';
-                ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
-                ctx.font = '12px Inter';
-                ctx.fillText(`— from '${startStar.title}'`, 0, -5);
-                ctx.restore();
+                let startStarIds = [];
+                if (endStar.connectsTo) {
+                    startStarIds = Array.isArray(endStar.connectsTo) ? endStar.connectsTo : [endStar.connectsTo];
+                } else {
+                    startStarIds = [sourceStar.id];
+                }
+
+                startStarIds.forEach(startStarId => {
+                    const startStar = constellation.stars.find(s => s.id === startStarId);
+                    if (!startStar) return;
+
+                    const sx = startStar.x * canvas.width;
+                    const sy = startStar.y * canvas.height;
+                    const ex = endStar.x * canvas.width;
+                    const ey = endStar.y * canvas.height;
+
+                    ctx.beginPath();
+                    ctx.moveTo(sx, sy);
+                    ctx.lineTo(ex, ey);
+                    ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    ctx.closePath();
+                });
             });
         }
         
@@ -366,6 +405,21 @@
             type();
         }
 
+        function hideTooltipAndStopAudio() {
+            canvas.style.cursor = 'default';
+            hoveredStar = null;
+            hoverTooltip.classList.remove('active');
+            
+            if(lastHoveredStarId !== null) {
+                if (typewriterTimeout) { clearTimeout(typewriterTimeout); }
+                if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') { ytPlayer.pauseVideo(); }
+                
+                clearTimeout(snippetTimeout);
+                clearInterval(volumeFadeInterval);
+                lastHoveredStarId = null;
+            }
+        }
+
         canvas.addEventListener('mousemove', (e) => {
             if (!ytPlayer) return;
 
@@ -376,20 +430,34 @@
             const star = getStarAtPos(mouseX, mouseY);
             
             if (star) {
+                clearTimeout(tooltipHideTimeout); // NEW: Prevent hiding
                 canvas.style.cursor = 'pointer';
                 hoveredStar = star;
                 
                 if (star.id !== lastHoveredStarId) {
-                    hoverTooltip.innerHTML = `
+                    let tooltipHTML = `
                         <h3 class="text-xl font-bold text-cyan-300">${star.title}</h3>
                         <p>${star.artist}</p>
                         <p class="text-sm text-gray-400 mt-2">Released: ${star.year}</p>
                         <p id="typewriter-output" class="text-sm text-gray-300 mt-2 typewriter-text"></p>
                     `;
+                    
+                    if (star.sound && star.sound.length > 1) {
+                        tooltipHTML += '<div class="mt-2 flex flex-col gap-2">';
+                        star.sound.forEach((sample, index) => {
+                            tooltipHTML += `<button onclick="triggerSample(${star.id}, ${index})" class="sample-button">Play: ${sample.name}</button>`;
+                        });
+                        tooltipHTML += '</div>';
+                    }
+
+                    hoverTooltip.innerHTML = tooltipHTML;
                     const typewriterElement = document.getElementById('typewriter-output');
                     
                     typeWriter(star.sample, typewriterElement);
-                    playSnippet(star);
+                    
+                    if (star.sound && star.sound.length === 1) {
+                        playSnippet(star.sound[0]);
+                    }
                     lastHoveredStarId = star.id;
                 }
                 
@@ -408,19 +476,18 @@
                 hoverTooltip.classList.add('active');
 
             } else {
-                canvas.style.cursor = 'default';
-                hoveredStar = null;
-                hoverTooltip.classList.remove('active');
-                
-                if(lastHoveredStarId !== null) {
-                    if (typewriterTimeout) { clearTimeout(typewriterTimeout); }
-                    if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') { ytPlayer.pauseVideo(); }
-                    
-                    clearTimeout(snippetTimeout);
-                    clearInterval(volumeFadeInterval);
-                    lastHoveredStarId = null;
-                }
+                // NEW: Use a timeout to delay hiding
+                tooltipHideTimeout = setTimeout(hideTooltipAndStopAudio, 200);
             }
+        });
+
+        // NEW: Add listeners to the tooltip itself
+        hoverTooltip.addEventListener('mouseenter', () => {
+            clearTimeout(tooltipHideTimeout);
+        });
+
+        hoverTooltip.addEventListener('mouseleave', () => {
+            hideTooltipAndStopAudio();
         });
 
         function loadConstellation(key) {
