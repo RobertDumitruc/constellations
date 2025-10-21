@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sonic Constellations</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Sonic Experiences</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,23 +12,32 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #000010;
+            background-image: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
             color: #EAEAEA;
             overflow: hidden;
             margin: 0;
             padding: 0;
+            overscroll-behavior: none;
+            height: 100vh;
         }
 
+        .view {
+            display: none; /* Hide views by default */
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* --- Constellation View Styles --- */
+        #constellations-view {
+            position: relative;
+        }
         #constellation-canvas {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             z-index: 1;
-            background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
         }
-
-        .content-overlay {
+        .constellation-overlay {
             position: relative;
             z-index: 2;
             padding: 2rem;
@@ -37,34 +46,11 @@
             align-items: center;
             height: 100vh;
             text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-            pointer-events: none; /* Allow clicks to pass through to the canvas */
+            pointer-events: none;
         }
-        
-        /* Re-enable pointer events for interactive UI elements within the overlay */
-        .content-overlay header, .content-overlay nav {
+        .constellation-overlay header, .constellation-overlay nav {
             pointer-events: auto;
         }
-        
-        .nav-button {
-            transition: all 0.3s ease;
-            border: 1px solid rgba(0, 200, 255, 0.3);
-        }
-        .nav-button:hover, .nav-button.active {
-            background-color: rgba(0, 200, 255, 0.2);
-            box-shadow: 0 0 15px rgba(0, 200, 255, 0.5);
-            transform: translateY(-2px);
-        }
-        
-        /* Hide the YouTube player */
-        #youtube-player {
-            position: absolute;
-            top: -9999px;
-            left: -9999px;
-            width: 1px;
-            height: 1px;
-        }
-
-        /* Liquid Glass Tooltip */
         .hover-tooltip {
             position: absolute;
             width: 250px;
@@ -75,7 +61,7 @@
             border-radius: 12px;
             padding: 1rem;
             z-index: 10;
-            pointer-events: auto; /* Changed to auto to allow button clicks */
+            pointer-events: auto;
             opacity: 0;
             transform: translateY(10px) scale(0.95);
             transition: opacity 0.2s ease, transform 0.2s ease;
@@ -86,477 +72,485 @@
             transform: translateY(0) scale(1);
             visibility: visible;
         }
-
-        /* Typewriter effect styles */
         .typewriter-text {
-            white-space: normal; /* Allows text to wrap */
-            border-right: .15em solid cyan; /* The blinking cursor */
+            white-space: normal;
+            border-right: .15em solid cyan;
             animation: blink-caret .75s step-end infinite;
-            display: inline-block; /* Essential for text wrapping with typewriter */
-            vertical-align: bottom; /* Aligns cursor nicely */
-            min-height: 1em; /* Prevents layout jump */
-            width: 100%; /* Ensure it takes up container width */
+            display: inline-block;
+            vertical-align: bottom;
+            min-height: 1em;
+            width: 100%;
         }
-
-        /* The typewriter cursor effect */
         @keyframes blink-caret {
             from, to { border-color: transparent }
-            50% { border-color: cyan; } /* Changed to cyan to match theme */
+            50% { border-color: cyan; }
         }
-        
-        /* Sample button styles */
+
+        /* --- Card Deck View Styles --- */
+        #card-deck-view {
+            perspective: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 5rem;
+            box-sizing: border-box;
+        }
+        .card-deck {
+            position: relative;
+            width: 90vw;
+            max-width: 380px;
+            height: 70vh;
+            max-height: 580px;
+        }
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(20, 20, 40, 0.6);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            cursor: grab;
+            touch-action: none;
+            user-select: none;
+        }
+        .card.dragging {
+            transition: none;
+        }
+        .card-header .artist { color: #aaa; }
+        .card-header .title { color: #fff; text-shadow: 0 0 10px rgba(0,255,255,0.5); }
+        .card-header .year { color: #777; }
+        .sample-info {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+
+        /* --- Shared Styles --- */
         .sample-button {
             background: rgba(0, 255, 255, 0.1);
             border: 1px solid rgba(0, 255, 255, 0.3);
             color: #EAEAEA;
-            padding: 4px 8px;
+            padding: 10px 15px;
             width: 100%;
-            border-radius: 6px;
-            font-size: 12px;
+            border-radius: 10px;
+            font-size: 1rem;
             text-align: center;
             cursor: pointer;
             transition: background-color 0.2s;
+            backdrop-filter: blur(5px);
         }
         .sample-button:hover {
             background: rgba(0, 255, 255, 0.3);
         }
-
+        .nav-button {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 200, 255, 0.3);
+            margin: 0 5px;
+        }
+        .nav-button:hover, .nav-button.active {
+            background-color: rgba(0, 200, 255, 0.2);
+            box-shadow: 0 0 15px rgba(0, 200, 255, 0.5);
+        }
+        #youtube-player {
+            position: absolute;
+            top: -9999px; left: -9999px;
+            width: 1px; height: 1px;
+        }
     </style>
 </head>
 <body class="antialiased">
 
-    <div id="audio-start-overlay" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center text-center p-4 transition-opacity duration-500">
+    <div id="audio-start-overlay" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center text-center p-4">
         <div>
-            <h2 id="loading-text" class="text-3xl font-bold text-white mb-4">Welcome to the Constellation of Samples</h2>
-            <p id="loading-subtext" class="text-lg text-gray-300 mb-8">Click to enable audio and begin your exploration.</p>
-            <button id="start-audio-btn" class="bg-cyan-500 text-black font-bold py-3 px-8 rounded-full text-lg hover:bg-cyan-400 transition-transform hover:scale-105">Enter</button>
+            <h2 class="text-3xl font-bold text-white mb-4">Sonic Experiences</h2>
+            <p class="text-lg text-gray-300 mb-8">Tap to enable audio and explore the connections.</p>
+            <button id="start-audio-btn" class="bg-cyan-500 text-black font-bold py-3 px-8 rounded-full text-lg">Enter</button>
         </div>
     </div>
 
-    <canvas id="constellation-canvas"></canvas>
-
-    <div class="content-overlay">
-        <!-- Header --><header class="text-center mb-8">
-            <h1 class="text-4xl md:text-5xl font-bold tracking-wider text-white">Constellation of Samples</h1>
-            <p class="text-lg md:text-xl text-cyan-200 mt-2">Exploring <u><b>the</b></u> invisible <u><b>line</b></u>s connecting music through time.</p>
-            <p class="text-lg md:text-xl text-blue-200 mt-2" style="opacity: 20%; font-size: 10pt;">Hover over the stars or tap them to hear the samples!</p>
-        </header>
-
-        <!-- Navigation --><nav id="constellation-nav" class="flex flex-wrap justify-center gap-3 mb-8">
-            <!-- Navigation buttons will be injected by JS --></nav>
+    <!-- Container for both views -->
+    <div id="constellations-view" class="view">
+        <canvas id="constellation-canvas"></canvas>
+        <div class="constellation-overlay">
+            <header class="text-center mb-8">
+                <h1 class="text-4xl md:text-5xl font-bold tracking-wider text-white">Constellation of Samples</h1>
+                <nav id="constellation-nav-desktop" class="flex flex-wrap justify-center gap-2 mt-4"></nav>
+            </header>
+        </div>
+        <div id="hover-tooltip" class="hover-tooltip"></div>
     </div>
 
-    <!-- Tooltip element --><div id="hover-tooltip" class="hover-tooltip"></div>
+    <div id="card-deck-view" class="view">
+        <div class="fixed top-0 left-0 w-full p-4 z-10">
+            <header class="text-center">
+                <h1 class="text-2xl font-bold tracking-wider text-white">Sonic Card Deck</h1>
+                <nav id="constellation-nav-mobile" class="flex flex-wrap justify-center gap-2 mt-4"></nav>
+            </header>
+        </div>
+        <div class="main-container">
+            <div id="card-deck" class="card-deck"></div>
+        </div>
+    </div>
     
-    <!-- YouTube player will be injected here --><div id="youtube-player"></div>
+    <div id="youtube-player"></div>
 
     <script>
-        const canvas = document.getElementById('constellation-canvas');
-        const ctx = canvas.getContext('2d');
-        const hoverTooltip = document.getElementById('hover-tooltip');
-        
-        let stars = [];
-        let hoveredStar = null;
-        let lastHoveredStarId = null;
-        let activeConstellation = null;
-        let ytPlayer;
-        let snippetTimeout;
-        let volumeFadeInterval;
-        let isYTAPiReady = false;
-
-        // Typewriter specific variables
-        let typewriterTimeout;
-        let typewriterIndex = 0;
-        
-        // Timeout for hiding tooltip
-        let tooltipHideTimeout;
-
-        // --- DATA ---
+        // --- SHARED DATA AND LOGIC ---
         const constellations = {
             "Amen Break": {
                 name: "The 'Amen Break'",
-                stars: [
-                    { id: 1, title: "Amen, Brother", artist: "The Winstons", year: 1969, x: 0.5, y: 0.5, isSource: true, sample: "The foundational 6-second drum solo that became one of the most sampled breaks in history.", sound: [{ name: "Main Sample", videoId: 'GxZuq57_bYM', startTime: 86 }] },
-                    { id: 2, title: "Straight Outta Compton", artist: "N.W.A.", year: 1988, x: 0.3, y: 0.35, sample: "The iconic drum loop provides the track's raw backbone, defining the West Coast sound.", sound: [{ name: "Main Sample", videoId: 'TMZi25Pq3T8', startTime: 4 }] },
-                    { id: 3, title: "King of the Beats", artist: "Mantronix", year: 1988, x: 0.7, y: 0.25, sample: "One of the earliest hip-hop tracks to heavily feature and popularize the Amen Break.", sound: [{ name: "Main Sample", videoId: 'WzgODI4osy4', startTime: 19 }] },
-                    { id: 4, title: "I Desire", artist: "Salt-N-Pepa", year: 1986, x: 0.65, y: 0.7, sample: "The break is pitched down and slowed down, giving the track its energy and rhythm.", sound: [{ name: "Main Sample", videoId: 'oJ3yleK136k', startTime: 3 }] },
-                    { id: 5, title: "Pigs", artist: "Tyler, The Creator", year: 2013, x: 0.35, y: 0.75, sample: "Samples both the Amen Break and the iconic lyrics from Jay-Z's '99 Problems'.", sound: [{ name: "Amen Break", videoId: 'gmr4iZ5dimY', startTime: 0 }, { name: "'99 Problems' Vocals", videoId: 'gmr4iZ5dimY', startTime: 249 }], connectsTo: [1, 8] },
-                    { id: 6, title: "Sugar On My Tongue", artist: "Tyler, The Creator", year: 2011, x: 0.85, y: 0.45, sample: "Features the wailing sample of the driving beat from Mantronix's 'King of the Beats'.", sound: [{ name: "Main Sample", videoId: 'ljHdccyQbT4', startTime: 139 }], connectsTo: 3 },
-                    { id: 7, title: "The Mission", artist: "Special Ed", year: 1990, x: 0.74, y: 0.6, sample: "The lyrics of 'I desire' are featured in the first few seconds of this song.", sound: [{ name: "Main Sample", videoId: 'kt6JowKz4E4', startTime: 2 }], connectsTo: 4 },
-                    { id: 8, title: "99 Problems", artist: "Jay-Z", year: 2003, x: 0.15, y: 0.6, sample: "Built around a sample of 'The Big Beat' by Billy Squier, its drum pattern is iconic.", sound: [{ name: "Main Sample", videoId: '6uikJTnmtgw', startTime: 0 }], isGuest: true }
+                songs: [
+                    { id: 1, title: "Amen, Brother", artist: "The Winstons", year: 1969, x: 0.5, y: 0.5, isSource: true, sample: "The foundational 6-second drum solo that became one of the most sampled breaks in history.", sound: [{ name: "Play Sample", videoId: 'GxZuq57_bYM', startTime: 86 }] },
+                    { id: 2, title: "Straight Outta Compton", artist: "N.W.A.", year: 1988, x: 0.3, y: 0.35, sample: "The iconic drum loop provides the track's raw backbone.", sound: [{ name: "Play Sample", videoId: 'TMZi25Pq3T8', startTime: 4 }] },
+                    { id: 3, title: "King of the Beats", artist: "Mantronix", year: 1988, x: 0.7, y: 0.25, sample: "One of the earliest hip-hop tracks to popularize the Amen Break.", sound: [{ name: "Play Sample", videoId: 'WzgODI4osy4', startTime: 19 }] },
+                    { id: 4, title: "I Desire", artist: "Salt-N-Pepa", year: 1986, x: 0.65, y: 0.7, sample: "The break is pitched down and slowed down.", sound: [{ name: "Play Sample", videoId: 'oJ3yleK136k', startTime: 3 }] },
+                    { id: 5, title: "Pigs", artist: "Tyler, The Creator", year: 2013, x: 0.35, y: 0.75, sample: "Samples both the Amen Break and Jay-Z's '99 Problems'.", sound: [{ name: "Play 'Amen Break'", videoId: 'gmr4iZ5dimY', startTime: 0 }, { name: "Play '99 Problems' Vocals", videoId: 'gmr4iZ5dimY', startTime: 249 }], connectsTo: [1, 8] },
+                    { id: 6, title: "Sugar On My Tongue", artist: "Tyler, The Creator", year: 2011, x: 0.85, y: 0.45, sample: "Features a sample from Mantronix's 'King of the Beats'.", sound: [{ name: "Play Sample", videoId: 'ljHdccyQbT4', startTime: 139 }], connectsTo: 3 },
+                    { id: 7, title: "The Mission", artist: "Special Ed", year: 1990, x: 0.74, y: 0.6, sample: "The lyrics of 'I desire' are featured in this song.", sound: [{ name: "Play Sample", videoId: 'kt6JowKz4E4', startTime: 2 }], connectsTo: 4 },
+                    { id: 8, title: "99 Problems", artist: "Jay-Z", year: 2003, x: 0.15, y: 0.6, sample: "Its drum pattern is iconic.", sound: [{ name: "Play Sample", videoId: '6uikJTnmtgw', startTime: 0 }], isGuest: true }
                 ]
             },
             "Funky Drummer": {
                 name: "The 'Funky Drummer'",
-                stars: [
-                    { id: 1, title: "Funky Drummer", artist: "James Brown", year: 1970, x: 0.5, y: 0.5, isSource: true, sample: "Clyde Stubblefield's legendary drum break, a cornerstone of hip-hop and funk.", sound: [{ name: "Main Sample", videoId: 'dNPaf2D3TSE', startTime: 326 }] },
-                    { id: 2, title: "Rebel Without a Pause", artist: "Public Enemy", year: 1987, x: 0.25, y: 0.6, sample: "The break is chopped and layered to create a chaotic, energetic rhythm, defining early Public Enemy.", sound: [{ name: "Main Sample", videoId: '21sK74_prJA', startTime: 53 }] },
-                    { id: 3, title: "Freedom! '90", artist: "George Michael", year: 1990, x: 0.7, y: 0.7, sample: "A clean loop of the break drives this pop anthem, giving it a powerful, rhythmic foundation.", sound: [{ name: "Main Sample", videoId: 'diYAc7gB-0A', startTime: 0 }] },
-                    { id: 4, title: "Let Me Ride", artist: "Dr. Dre", year: 1992, x: 0.3, y: 0.3, sample: "The break forms the core of this G-funk classic, providing its signature laid-back groove.", sound: [{ name: "Main Sample", videoId: '3-S2s_x2vjU', startTime: 32 }] },
-                    { id: 5, title: "Run's House", artist: "Run-DMC", year: 1988, x: 0.75, y: 0.35, sample: "The unmistakable groove powers this hip-hop staple, showcasing its versatility.", sound: [{ name: "Main Sample", videoId: '22gGAY82A6A', startTime: 0 }] }
+                songs: [
+                    { id: 1, title: "Funky Drummer", artist: "James Brown", year: 1970, x: 0.5, y: 0.5, isSource: true, sample: "Clyde Stubblefield's legendary drum break.", sound: [{ name: "Play Sample", videoId: 'dNPaf2D3TSE', startTime: 326 }] },
+                    { id: 2, title: "Rebel Without a Pause", artist: "Public Enemy", year: 1987, x: 0.25, y: 0.6, sample: "The break is chopped and layered to create a chaotic rhythm.", sound: [{ name: "Play Sample", videoId: '21sK74_prJA', startTime: 53 }] },
                 ]
             }
         };
 
-        // --- YOUTUBE PLAYER SETUP ---
-        function onYouTubeIframeAPIReady() {
-            isYTAPiReady = true;
-            const startBtn = document.getElementById('start-audio-btn');
-            const loadingSubtext = document.getElementById('loading-subtext');
-            if (startBtn) {
-                startBtn.disabled = false;
-                startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                loadingSubtext.textContent = 'Click to enable audio and begin your exploration.';
-            }
-        }
+        let ytPlayer, snippetTimeout, volumeFadeInterval, isYTAPiReady = false;
+        let activeConstellationKey = Object.keys(constellations)[0];
+
+        function onYouTubeIframeAPIReady() { isYTAPiReady = true; }
         
-        // Global function to be called from onclick attribute
-        function triggerSample(starId, sampleIndex) {
-            if (!activeConstellation) return;
-            const star = activeConstellation.stars.find(s => s.id === starId);
-            if (star && star.sound && star.sound[sampleIndex]) {
-                playSnippet(star.sound[sampleIndex]);
-            }
+        function triggerSample(songId, sampleIndex) {
+            const song = constellations[activeConstellationKey].songs.find(s => s.id === songId);
+            if (song && song.sound && song.sound[sampleIndex]) playSnippet(song.sound[sampleIndex]);
         }
         window.triggerSample = triggerSample;
 
         function playSnippet(soundObject) {
             if (!ytPlayer || !soundObject || typeof ytPlayer.loadVideoById !== 'function') return;
-
             clearTimeout(snippetTimeout);
             clearInterval(volumeFadeInterval);
-
             const { videoId, startTime } = soundObject;
             const fixedDurationSeconds = 10;
-            const newEndTime = startTime + fixedDurationSeconds;
             const durationMs = fixedDurationSeconds * 1000;
-
             ytPlayer.setVolume(0);
-            ytPlayer.loadVideoById({ videoId, startSeconds: startTime, endSeconds: newEndTime });
-            ytPlayer.playVideo(); 
-
+            ytPlayer.loadVideoById({ videoId, startSeconds: startTime, endSeconds: startTime + fixedDurationSeconds });
+            ytPlayer.playVideo();
+            let currentVolume = 0;
             const fadeDuration = 1000;
             const fadeSteps = 20;
             const volumeStep = 100 / fadeSteps;
             const stepInterval = fadeDuration / fadeSteps;
-            let currentVolume = 0;
-
             volumeFadeInterval = setInterval(() => {
                 currentVolume += volumeStep;
-                if (currentVolume >= 100) {
-                    currentVolume = 100;
-                    clearInterval(volumeFadeInterval);
-                }
+                if (currentVolume >= 100) { currentVolume = 100; clearInterval(volumeFadeInterval); }
                 ytPlayer.setVolume(currentVolume);
             }, stepInterval);
-
-            const fadeOutStartTime = durationMs - fadeDuration;
-            
             snippetTimeout = setTimeout(() => {
                 clearInterval(volumeFadeInterval);
                 volumeFadeInterval = setInterval(() => {
                     currentVolume -= volumeStep;
-                    if (currentVolume <= 0) {
-                        currentVolume = 0;
-                        ytPlayer.pauseVideo();
-                        clearInterval(volumeFadeInterval);
-                    }
+                    if (currentVolume <= 0) { currentVolume = 0; ytPlayer.pauseVideo(); clearInterval(volumeFadeInterval); }
                     ytPlayer.setVolume(currentVolume);
                 }, stepInterval);
-            }, fadeOutStartTime > 0 ? fadeOutStartTime : 0);
+            }, durationMs - fadeDuration);
         }
 
-        // --- SETUP & SIZING ---
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            draw();
+        function initAudio() {
+            document.getElementById('start-audio-btn').addEventListener('click', () => {
+                if (!isYTAPiReady) { alert('Player API not ready.'); return; }
+                document.getElementById('audio-start-overlay').style.display = 'none';
+                ytPlayer = new YT.Player('youtube-player', {
+                    height: '1', width: '1',
+                    playerVars: { 'autoplay': 1, 'controls': 0 },
+                    events: { 'onReady': () => console.log('YouTube Player is ready.') }
+                });
+            }, { once: true });
         }
 
-        // --- DRAWING FUNCTIONS ---
-        function drawStar(star) {
-            const x = star.x * canvas.width;
-            const y = star.y * canvas.height;
-            const radius = star.isSource ? 12 : 6;
-            const isHovered = hoveredStar && hoveredStar.id === star.id;
+        function initNav(navId, onSelect) {
+            const navContainer = document.getElementById(navId);
+            navContainer.innerHTML = '';
+            Object.keys(constellations).forEach(key => {
+                const button = document.createElement('button');
+                button.textContent = constellations[key].name;
+                button.className = 'nav-button bg-black/20 text-cyan-200 py-2 px-4 rounded-full text-sm';
+                if (key === activeConstellationKey) button.classList.add('active');
+                button.addEventListener('click', () => {
+                    activeConstellationKey = key;
+                    document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+                    document.querySelectorAll(`#${navId} button`).forEach((btn, i) => {
+                        if (Object.keys(constellations)[i] === key) btn.classList.add('active');
+                    });
+                    onSelect(key);
+                });
+                navContainer.appendChild(button);
+            });
+        }
+        
+        // --- CONSTELLATION VIEW LOGIC ---
+        const constellationState = {
+            canvas: null, ctx: null, tooltip: null,
+            stars: [], hoveredStar: null, lastHoveredStarId: null,
+            tooltipHideTimeout: null, animationId: null,
+            typewriterTimeout: null, typewriterIndex: 0
+        };
+
+        function initConstellations() {
+            const view = document.getElementById('constellations-view');
+            view.style.display = 'block';
+            constellationState.canvas = document.getElementById('constellation-canvas');
+            constellationState.ctx = constellationState.canvas.getContext('2d');
+            constellationState.tooltip = document.getElementById('hover-tooltip');
             
-            ctx.beginPath();
-            ctx.arc(x, y, isHovered ? radius * 1.5 : radius, 0, Math.PI * 2);
-            
-            if (star.isGuest) {
-                ctx.shadowColor = 'rgba(220, 180, 255, 0.9)';
-                ctx.fillStyle = 'rgba(230, 200, 255, 1)';
-            } else if (star.isSource) {
-                ctx.shadowColor = 'rgba(255, 255, 180, 0.9)';
-                ctx.fillStyle = 'rgba(255, 255, 220, 1)';
-            } else {
-                ctx.shadowColor = 'rgba(0, 255, 255, 0.7)';
-                ctx.fillStyle = 'rgba(200, 255, 255, 1)';
+            initNav('constellation-nav-desktop', (key) => {
+                activeConstellationKey = key;
+            });
+
+            constellationState.canvas.addEventListener('mousemove', handleConstellationMouseMove);
+            constellationState.tooltip.addEventListener('mouseenter', () => clearTimeout(constellationState.tooltipHideTimeout));
+            constellationState.tooltip.addEventListener('mouseleave', hideConstellationTooltipAndStopAudio);
+
+            for (let i = 0; i < 200; i++) {
+                constellationState.stars.push({ x: Math.random(), y: Math.random(), radius: Math.random() * 1.5, alpha: Math.random() * 0.5 + 0.2, velocity: Math.random() * 0.1 + 0.05 });
             }
             
-            ctx.shadowBlur = isHovered ? 30 : 15;
-            ctx.fill();
-            ctx.closePath();
-            ctx.shadowBlur = 0;
+            const resize = () => {
+                constellationState.canvas.width = window.innerWidth;
+                constellationState.canvas.height = window.innerHeight;
+            };
+            window.addEventListener('resize', resize);
+            resize();
+            
+            animateConstellation();
         }
 
-        function drawLines(constellation) {
-            const sourceStar = constellation.stars.find(s => s.isSource);
-            if (!sourceStar) return;
+        function animateConstellation() {
+            const { ctx, canvas, stars } = constellationState;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            stars.forEach(star => {
+                star.y -= star.velocity / 1000;
+                if (star.y < 0) star.y = 1;
+                ctx.beginPath();
+                ctx.arc(star.x * canvas.width, star.y * canvas.height, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+                ctx.fill();
+            });
+            drawConstellationLines();
+            drawConstellationStars();
+            constellationState.animationId = requestAnimationFrame(animateConstellation);
+        }
 
-            constellation.stars.forEach(endStar => {
-                if (endStar.isSource) return;
-                
-                let startStarIds = [];
-                if (endStar.connectsTo) {
-                    startStarIds = Array.isArray(endStar.connectsTo) ? endStar.connectsTo : [endStar.connectsTo];
+        function drawConstellationStars() {
+            const { ctx, canvas, hoveredStar } = constellationState;
+            const constellation = constellations[activeConstellationKey];
+            if (!constellation) return;
+
+            constellation.songs.forEach(star => {
+                const x = star.x * canvas.width;
+                const y = star.y * canvas.height;
+                const radius = star.isSource ? 12 : 6;
+                const isHovered = hoveredStar && hoveredStar.id === star.id;
+                ctx.beginPath();
+                ctx.arc(x, y, isHovered ? radius * 1.5 : radius, 0, Math.PI * 2);
+                if (star.isGuest) {
+                    ctx.shadowColor = 'rgba(220, 180, 255, 0.9)'; ctx.fillStyle = 'rgba(230, 200, 255, 1)';
+                } else if (star.isSource) {
+                    ctx.shadowColor = 'rgba(255, 255, 180, 0.9)'; ctx.fillStyle = 'rgba(255, 255, 220, 1)';
                 } else {
-                    startStarIds = [sourceStar.id];
+                    ctx.shadowColor = 'rgba(0, 255, 255, 0.7)'; ctx.fillStyle = 'rgba(200, 255, 255, 1)';
                 }
+                ctx.shadowBlur = isHovered ? 30 : 15;
+                ctx.fill();
+                ctx.closePath();
+                ctx.shadowBlur = 0;
+            });
+        }
 
+        function drawConstellationLines() {
+            const { ctx, canvas } = constellationState;
+            const constellation = constellations[activeConstellationKey];
+            if (!constellation) return;
+            const sourceStar = constellation.songs.find(s => s.isSource);
+            if (!sourceStar) return;
+            constellation.songs.forEach(endStar => {
+                if (endStar.isSource) return;
+                let startStarIds = endStar.connectsTo ? (Array.isArray(endStar.connectsTo) ? endStar.connectsTo : [endStar.connectsTo]) : [sourceStar.id];
                 startStarIds.forEach(startStarId => {
-                    const startStar = constellation.stars.find(s => s.id === startStarId);
+                    const startStar = constellation.songs.find(s => s.id === startStarId);
                     if (!startStar) return;
-
-                    const sx = startStar.x * canvas.width;
-                    const sy = startStar.y * canvas.height;
-                    const ex = endStar.x * canvas.width;
-                    const ey = endStar.y * canvas.height;
-
+                    const sx = startStar.x * canvas.width, sy = startStar.y * canvas.height;
+                    const ex = endStar.x * canvas.width, ey = endStar.y * canvas.height;
                     ctx.beginPath();
                     ctx.moveTo(sx, sy);
                     ctx.lineTo(ex, ey);
                     ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
                     ctx.lineWidth = 1;
                     ctx.stroke();
-                    ctx.closePath();
                 });
             });
         }
         
-        function createBackgroundStars() {
-            for (let i = 0; i < 200; i++) {
-                stars.push({
-                    x: Math.random(),
-                    y: Math.random(),
-                    radius: Math.random() * 1.5,
-                    alpha: Math.random() * 0.5 + 0.2,
-                    velocity: Math.random() * 0.1 + 0.05
-                });
+        function handleConstellationMouseMove(e) {
+            if (!ytPlayer) return;
+            const rect = constellationState.canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const star = getStarAtPos(mouseX, mouseY);
+            if (star) {
+                clearTimeout(constellationState.tooltipHideTimeout);
+                showConstellationTooltip(star);
+            } else {
+                constellationState.tooltipHideTimeout = setTimeout(hideConstellationTooltipAndStopAudio, 200);
             }
         }
 
-        function drawBackground() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            stars.forEach(star => {
-                star.y -= star.velocity / 1000;
-                if (star.y < 0) star.y = 1;
-
-                ctx.beginPath();
-                ctx.arc(star.x * canvas.width, star.y * canvas.height, star.radius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
-                ctx.fill();
-            });
-        }
-
-        function draw() {
-            drawBackground();
-            if (activeConstellation) {
-                drawLines(activeConstellation);
-                activeConstellation.stars.forEach(drawStar);
-            }
-        }
-        
-        function animate() {
-            draw();
-            requestAnimationFrame(animate);
-        }
-        
         function getStarAtPos(x, y) {
-            if (!activeConstellation) return null;
-
-            for (const star of activeConstellation.stars) {
-                const starX = star.x * canvas.width;
-                const starY = star.y * canvas.height;
+            const constellation = constellations[activeConstellationKey];
+            if (!constellation) return null;
+            for (const star of constellation.songs) {
+                const starX = star.x * window.innerWidth, starY = star.y * window.innerHeight;
                 const radius = (star.isSource ? 12 : 6) * 1.5;
-                const distance = Math.sqrt((starX - x) ** 2 + (starY - y) ** 2);
-                if (distance < radius) {
-                    return star;
-                }
+                if (Math.sqrt((starX - x) ** 2 + (starY - y) ** 2) < radius) return star;
             }
             return null;
         }
+        
+        function showConstellationTooltip(star) {
+            const { tooltip } = constellationState;
+            if (star.id === constellationState.lastHoveredStarId) return;
+            constellationState.hoveredStar = star;
+            let tooltipHTML = `<h3 class="text-xl font-bold text-cyan-300">${star.title}</h3><p>${star.artist}</p><p class="text-sm text-gray-400 mt-2">Released: ${star.year}</p><p id="typewriter-output" class="text-sm text-gray-300 mt-2 typewriter-text"></p>`;
+            if (star.sound && star.sound.length > 1) {
+                tooltipHTML += '<div class="mt-2 flex flex-col gap-2">';
+                star.sound.forEach((sample, index) => tooltipHTML += `<button onclick="triggerSample(${star.id}, ${index})" class="sample-button">Play: ${sample.name}</button>`);
+                tooltipHTML += '</div>';
+            }
+            tooltip.innerHTML = tooltipHTML;
+            typeWriter(star.sample, document.getElementById('typewriter-output'));
+            if (star.sound && star.sound.length === 1) playSnippet(star.sound[0]);
+            constellationState.lastHoveredStarId = star.id;
+            let x = star.x * window.innerWidth + 20, y = star.y * window.innerHeight;
+            if (x + tooltip.offsetWidth > window.innerWidth - 20) x = star.x * window.innerWidth - tooltip.offsetWidth - 20;
+            if (y + tooltip.offsetHeight > window.innerHeight - 20) y = window.innerHeight - tooltip.offsetHeight - 20;
+            tooltip.style.left = `${x}px`;
+            tooltip.style.top = `${y}px`;
+            tooltip.classList.add('active');
+        }
+
+        function hideConstellationTooltipAndStopAudio() {
+            constellationState.hoveredStar = null;
+            constellationState.tooltip.classList.remove('active');
+            if(constellationState.lastHoveredStarId !== null) {
+                if (constellationState.typewriterTimeout) clearTimeout(constellationState.typewriterTimeout);
+                if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
+                clearTimeout(snippetTimeout);
+                clearInterval(volumeFadeInterval);
+                constellationState.lastHoveredStarId = null;
+            }
+        }
 
         function typeWriter(text, element) {
-            if (typewriterTimeout) {
-                clearTimeout(typewriterTimeout);
-            }
-            typewriterIndex = 0;
+            if (constellationState.typewriterTimeout) clearTimeout(constellationState.typewriterTimeout);
+            constellationState.typewriterIndex = 0;
             element.innerHTML = '';
-            
             function type() {
-                if (typewriterIndex < text.length) {
-                    element.innerHTML += text.charAt(typewriterIndex);
-                    typewriterIndex++;
-                    typewriterTimeout = setTimeout(type, 30);
+                if (constellationState.typewriterIndex < text.length) {
+                    element.innerHTML += text.charAt(constellationState.typewriterIndex++);
+                    constellationState.typewriterTimeout = setTimeout(type, 30);
                 }
             }
             type();
         }
+
+        // --- CARD DECK VIEW LOGIC ---
+        function initCardDeck() {
+            const view = document.getElementById('card-deck-view');
+            view.style.display = 'flex';
+            initNav('constellation-nav-mobile', buildCardDeck);
+            buildCardDeck(activeConstellationKey);
+        }
+
+        function buildCardDeck(key) {
+            activeConstellationKey = key;
+            const cardDeck = document.getElementById('card-deck');
+            cardDeck.innerHTML = '';
+            const constellation = constellations[key];
+            const songsInOrder = [constellation.songs.find(s => s.isSource), ...constellation.songs.filter(s => !s.isSource).sort((a,b) => a.year - b.year)];
+            songsInOrder.forEach(song => { if(song) cardDeck.appendChild(createCard(song)); });
+            reorderCardDeck();
+        }
+
+        function createCard(song) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            let soundButtonsHTML = '';
+            if (song.sound) {
+                song.sound.forEach((sample, sampleIndex) => soundButtonsHTML += `<button onclick="triggerSample(${song.id}, ${sampleIndex})" class="sample-button mt-2">${sample.name}</button>`);
+            }
+            const sourceChip = song.isSource ? '<div class="absolute top-4 right-4 bg-yellow-500/20 text-yellow-300 text-xs font-bold px-3 py-1 rounded-full">SOURCE</div>' : '';
+            card.innerHTML = `${sourceChip}<div class="card-header"><p class="artist text-lg">${song.artist}</p><h2 class="title text-3xl font-bold">${song.title}</h2><p class="year text-sm">${song.year}</p></div><div class="sample-info"><p class="text-gray-300">${song.sample}</p><div class="mt-4 flex flex-col gap-2">${soundButtonsHTML}</div></div>`;
+            return card;
+        }
+
+        function reorderCardDeck() {
+            const remainingCards = document.querySelectorAll('#card-deck .card');
+            if (remainingCards.length === 0) { buildCardDeck(activeConstellationKey); return; }
+            remainingCards.forEach((card, index) => {
+                card.style.zIndex = remainingCards.length - index;
+                card.style.transform = `translateY(${index * -10}px) scale(${1 - index * 0.05})`;
+                card.style.opacity = index > 2 ? 0 : 1;
+            });
+            initCardInteraction(remainingCards[0]);
+        }
         
-        function showTooltip(star) {
-            if (star.id === lastHoveredStarId) return; // Don't re-render if it's the same star
-
-            clearTimeout(tooltipHideTimeout);
-            canvas.style.cursor = 'pointer';
-            hoveredStar = star;
-            
-            let tooltipHTML = `
-                <h3 class="text-xl font-bold text-cyan-300">${star.title}</h3>
-                <p>${star.artist}</p>
-                <p class="text-sm text-gray-400 mt-2">Released: ${star.year}</p>
-                <p id="typewriter-output" class="text-sm text-gray-300 mt-2 typewriter-text"></p>
-            `;
-            
-            if (star.sound && star.sound.length > 1) {
-                tooltipHTML += '<div class="mt-2 flex flex-col gap-2">';
-                star.sound.forEach((sample, index) => {
-                    tooltipHTML += `<button onclick="triggerSample(${star.id}, ${index})" class="sample-button">Play: ${sample.name}</button>`;
-                });
-                tooltipHTML += '</div>';
-            }
-
-            hoverTooltip.innerHTML = tooltipHTML;
-            const typewriterElement = document.getElementById('typewriter-output');
-            
-            typeWriter(star.sample, typewriterElement);
-            
-            if (star.sound && star.sound.length === 1) {
-                playSnippet(star.sound[0]);
-            }
-            lastHoveredStarId = star.id;
-
-            let x = star.x * canvas.width + 20;
-            let y = star.y * canvas.height;
-
-            if (x + hoverTooltip.offsetWidth > window.innerWidth - 20) {
-                x = star.x * canvas.width - hoverTooltip.offsetWidth - 20;
-            }
-             if (y + hoverTooltip.offsetHeight > window.innerHeight - 20) {
-                y = window.innerHeight - hoverTooltip.offsetHeight - 20;
-            }
-
-            hoverTooltip.style.left = `${x}px`;
-            hoverTooltip.style.top = `${y}px`;
-            hoverTooltip.classList.add('active');
+        function initCardInteraction(card) {
+            let isDragging = false, startX = 0, x = 0;
+            const onStart = (e) => { isDragging = true; card.classList.add('dragging'); startX = e.pageX || e.touches[0].pageX; };
+            const onMove = (e) => { if (!isDragging) return; e.preventDefault(); const currentX = e.pageX || e.touches[0].pageX; x = currentX - startX; const rotate = x / 20; card.style.transform = `translate(${x}px, 0) rotate(${rotate}deg)`; };
+            const onEnd = () => { if (!isDragging) return; isDragging = false; card.classList.remove('dragging'); if (Math.abs(x) > card.offsetWidth / 3) { const direction = x > 0 ? 1 : -1; card.style.transform = `translate(${direction * 500}px, 0) rotate(${direction * 30}deg)`; card.style.opacity = '0'; setTimeout(() => { card.remove(); reorderCardDeck(); }, 400); } else { card.style.transform = ''; } };
+            card.addEventListener('mousedown', onStart);
+            card.addEventListener('touchstart', onStart, { passive: true });
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('touchmove', onMove, { passive: false });
+            document.addEventListener('mouseup', onEnd);
+            document.addEventListener('touchend', onEnd);
         }
 
-        function hideTooltipAndStopAudio() {
-            canvas.style.cursor = 'default';
-            hoveredStar = null;
-            hoverTooltip.classList.remove('active');
-            
-            if(lastHoveredStarId !== null) {
-                if (typewriterTimeout) { clearTimeout(typewriterTimeout); }
-                if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') { ytPlayer.pauseVideo(); }
-                
-                clearTimeout(snippetTimeout);
-                clearInterval(volumeFadeInterval);
-                lastHoveredStarId = null;
-            }
-        }
-
-        // --- Event Handlers ---
-        canvas.addEventListener('mousemove', (e) => {
-            if (!ytPlayer) return;
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-            const star = getStarAtPos(mouseX, mouseY);
-            
-            if (star) {
-                clearTimeout(tooltipHideTimeout);
-                showTooltip(star);
+        // --- MAIN INITIALIZATION ---
+        function handleView() {
+            const isDesktop = window.innerWidth > 768;
+            if (isDesktop) {
+                document.getElementById('card-deck-view').style.display = 'none';
+                if (constellationState.animationId) cancelAnimationFrame(constellationState.animationId);
+                initConstellations();
             } else {
-                tooltipHideTimeout = setTimeout(hideTooltipAndStopAudio, 200);
+                document.getElementById('constellations-view').style.display = 'none';
+                if (constellationState.animationId) cancelAnimationFrame(constellationState.animationId);
+                initCardDeck();
             }
-        });
-
-        hoverTooltip.addEventListener('mouseenter', () => clearTimeout(tooltipHideTimeout));
-        hoverTooltip.addEventListener('mouseleave', () => hideTooltipAndStopAudio());
-
-        function loadConstellation(key) {
-            activeConstellation = constellations[key];
-            document.querySelectorAll('.nav-button').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.key === key);
-            });
         }
         
-        function initNav() {
-            const navContainer = document.getElementById('constellation-nav');
-            Object.keys(constellations).forEach(key => {
-                const button = document.createElement('button');
-                button.textContent = constellations[key].name;
-                button.dataset.key = key;
-                button.className = 'nav-button bg-black/20 text-cyan-200 py-2 px-4 rounded-full text-sm backdrop-blur-sm';
-                button.addEventListener('click', () => loadConstellation(key));
-                navContainer.appendChild(button);
-            });
-        }
-
-        function initAudio() {
-            const startBtn = document.getElementById('start-audio-btn');
-            const overlay = document.getElementById('audio-start-overlay');
-            const loadingText = document.getElementById('loading-text');
-            const loadingSubtext = document.getElementById('loading-subtext');
-            
-            startBtn.disabled = true;
-            startBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            loadingSubtext.textContent = 'Loading YouTube Player API...';
-
-            startBtn.addEventListener('click', () => {
-                loadingText.textContent = 'Initializing Player...';
-                loadingSubtext.textContent = 'Please wait a moment.';
-                startBtn.style.display = 'none';
-
-                ytPlayer = new YT.Player('youtube-player', {
-                    height: '1',
-                    width: '1',
-                    playerVars: { 'autoplay': 1, 'controls': 0 },
-                    events: {
-                        'onReady': () => {
-                            console.log('YouTube Player is ready.');
-                            overlay.style.opacity = '0';
-                            setTimeout(() => overlay.style.display = 'none', 500);
-                        },
-                        'onError': (error) => {
-                            console.error('YouTube Player Error:', error);
-                            loadingText.textContent = 'Error Initializing Player';
-                            loadingSubtext.textContent = 'Please check the console and refresh.';
-                        }
-                    }
-                });
-            }, { once: true });
-        }
-
-        // --- INITIALIZATION ---
-        window.addEventListener('resize', resizeCanvas);
-
+        window.addEventListener('resize', handleView);
         document.addEventListener('DOMContentLoaded', () => {
-            initNav();
             initAudio();
-            createBackgroundStars();
-            resizeCanvas();
-            animate();
-            
-            const firstKey = Object.keys(constellations)[0];
-            if(firstKey) {
-                loadConstellation(firstKey);
-            }
+            handleView();
         });
-
     </script>
-    <!-- Load the YouTube Iframe API --><script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
 
