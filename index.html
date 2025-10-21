@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Sonic Experiences</title>
+    <title>Constellations of Samples</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -171,7 +171,7 @@
 
     <div id="audio-start-overlay" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center text-center p-4">
         <div>
-            <h2 class="text-3xl font-bold text-white mb-4">Sonic Experiences</h2>
+            <h2 class="text-3xl font-bold text-white mb-4">Constellations of Samples</h2>
             <p class="text-lg text-gray-300 mb-8">Tap to enable audio and explore the connections.</p>
             <button id="start-audio-btn" class="bg-cyan-500 text-black font-bold py-3 px-8 rounded-full text-lg">Enter</button>
         </div>
@@ -183,16 +183,23 @@
         <div class="constellation-overlay">
             <header class="text-center mb-8">
                 <h1 class="text-4xl md:text-5xl font-bold tracking-wider text-white">Constellation of Samples</h1>
+                <p class="text-lg md:text-xl text-cyan-200 mt-2">Exploring the invisible lines connecting music through time.</p>
                 <nav id="constellation-nav-desktop" class="flex flex-wrap justify-center gap-2 mt-4"></nav>
             </header>
         </div>
         <div id="hover-tooltip" class="hover-tooltip"></div>
+        <!-- QR Code for Mobile View -->
+        <div class="fixed bottom-4 left-4 z-20 flex items-center gap-4">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=robertdumitruc.github.io/constellations&color=00ffff&bgcolor=090a0f" alt="QR code for mobile view" class="rounded-lg">
+            <p class="text-white/70 text-sm">Check out the<br>mobile experience.</p>
+        </div>
     </div>
 
     <div id="card-deck-view" class="view">
         <div class="fixed top-0 left-0 w-full p-4 z-10">
             <header class="text-center">
-                <h1 class="text-2xl font-bold tracking-wider text-white">Sonic Card Deck</h1>
+                <h1 class="text-2xl font-bold tracking-wider text-white">Sample Deck</h1>
+                <p class="text-md text-cyan-200 mt-1">Exploring the invisible lines connecting music through time.</p>
                 <nav id="constellation-nav-mobile" class="flex flex-wrap justify-center gap-2 mt-4"></nav>
             </header>
         </div>
@@ -230,6 +237,7 @@
 
         let ytPlayer, snippetTimeout, volumeFadeInterval, isYTAPiReady = false;
         let activeConstellationKey = Object.keys(constellations)[0];
+        let currentView = null;
 
         function onYouTubeIframeAPIReady() { isYTAPiReady = true; }
         
@@ -291,9 +299,10 @@
                 if (key === activeConstellationKey) button.classList.add('active');
                 button.addEventListener('click', () => {
                     activeConstellationKey = key;
+                    // Update both navs
                     document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
-                    document.querySelectorAll(`#${navId} button`).forEach((btn, i) => {
-                        if (Object.keys(constellations)[i] === key) btn.classList.add('active');
+                    document.querySelectorAll(`#constellation-nav-desktop button, #${navId} button`).forEach((btn) => {
+                         if (btn.textContent === constellations[key].name) btn.classList.add('active');
                     });
                     onSelect(key);
                 });
@@ -532,12 +541,16 @@
 
         // --- MAIN INITIALIZATION ---
         function handleView() {
-            const isDesktop = window.innerWidth > 768;
-            if (isDesktop) {
+            const newView = window.innerWidth > 768 ? 'desktop' : 'mobile';
+            if (newView === currentView) return; // No change needed
+            
+            currentView = newView;
+
+            if (currentView === 'desktop') {
                 document.getElementById('card-deck-view').style.display = 'none';
                 if (constellationState.animationId) cancelAnimationFrame(constellationState.animationId);
                 initConstellations();
-            } else {
+            } else { // mobile
                 document.getElementById('constellations-view').style.display = 'none';
                 if (constellationState.animationId) cancelAnimationFrame(constellationState.animationId);
                 initCardDeck();
