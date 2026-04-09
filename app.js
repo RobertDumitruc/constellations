@@ -33,7 +33,7 @@ const constellations = {
 let currentAudio = null;
 let snippetTimeout = null;
 let volumeFadeInterval = null;
-let audioEnabled = true;
+let audioEnabled = false;
 let activeConstellationKey = Object.keys(constellations)[0];
 let currentView = null;
 
@@ -142,25 +142,18 @@ function playSnippet(soundObject) {
 }
 
 function initAudio() {
-    const unlockAudio = () => {
-        audioEnabled = true;
-        document.removeEventListener('pointerdown', unlockAudio);
-        document.removeEventListener('keydown', unlockAudio);
-        document.removeEventListener('touchstart', unlockAudio);
-    };
+    const introButton = document.getElementById('intro-enter-btn');
+    const intro = document.getElementById('site-intro');
+    if (!introButton || !intro) return;
 
-    document.addEventListener('pointerdown', unlockAudio, { once: true });
-    document.addEventListener('keydown', unlockAudio, { once: true });
-    document.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
+    introButton.addEventListener('click', () => {
+        audioEnabled = true;
+        intro.classList.add('is-hidden');
+    }, { once: true });
 }
 
 function initIntro() {
-    const intro = document.getElementById('site-intro');
-    if (!intro) return;
-
-    window.setTimeout(() => {
-        intro.classList.add('is-hidden');
-    }, 2200);
+    return;
 }
 
 function initNav(navId, onSelect) {
