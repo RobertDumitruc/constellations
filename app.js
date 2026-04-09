@@ -58,6 +58,7 @@ const constellationState = {
 const mobileTreeState = {
     initialized: false,
     navInitialized: false,
+    headerToggleInitialized: false,
     canvas: null,
     ctx: null,
     infoPanel: null,
@@ -411,8 +412,36 @@ function typeWriter(text, element) {
 }
 
 function getMobileTreeSafeArea(rect = mobileTreeState.canvas ? mobileTreeState.canvas.getBoundingClientRect() : null) {
-    if (!rect) return { top: 40, bottom: 180, left: 24, right: 24, height: 0, width: 0 };
-    return { top: 40, bottom: 260, left: 24, right: 24, width: rect.width, height: rect.height };
+    const infoPanelHeight = mobileTreeState.infoPanel ? mobileTreeState.infoPanel.offsetHeight : 220;
+    const bottomInset = Math.max(160, infoPanelHeight + 28);
+    if (!rect) return { top: 40, bottom: bottomInset, left: 24, right: 24, height: 0, width: 0 };
+    return { top: 40, bottom: bottomInset, left: 24, right: 24, width: rect.width, height: rect.height };
+}
+
+function initMobileHeaderToggle() {
+    const view = document.getElementById('card-deck-view');
+    const toggle = document.getElementById('mobile-header-toggle');
+    if (!view || !toggle) return;
+
+    if (!mobileTreeState.headerToggleInitialized) {
+        toggle.addEventListener('click', () => {
+            const isCollapsed = view.classList.toggle('mobile-header-collapsed');
+            toggle.setAttribute('aria-expanded', String(!isCollapsed));
+
+            window.setTimeout(() => {
+                if (currentView === 'mobile') {
+                    resizeMobileTreeCanvas();
+                    renderMobileTree();
+                }
+            }, 360);
+        });
+        mobileTreeState.headerToggleInitialized = true;
+    }
+
+    if (window.innerWidth <= 768) {
+        view.classList.add('mobile-header-collapsed');
+        toggle.setAttribute('aria-expanded', 'false');
+    }
 }
 
 function initCardDeck() {
@@ -421,6 +450,7 @@ function initCardDeck() {
     mobileTreeState.canvas = document.getElementById('mobile-tree-canvas');
     mobileTreeState.ctx = mobileTreeState.canvas.getContext('2d');
     mobileTreeState.infoPanel = document.getElementById('mobile-tree-info');
+    initMobileHeaderToggle();
 
     if (!mobileTreeState.navInitialized) {
         initNav('constellation-nav-mobile', buildCardDeck);
@@ -767,6 +797,10 @@ function updateMobileTreeInfo(song) {
         <p class="info-copy">${song.sample}</p>
         <div class="mobile-tree-actions">${actions}</div>
     `;
+    if (currentView === 'mobile') {
+        resizeMobileTreeCanvas();
+        renderMobileTree();
+    }
 }
 
 function initQrFallback() {

@@ -63,7 +63,11 @@
 
     <div id="card-deck-view" class="view">
         <div class="mobile-header-shell">
-            <header class="mobile-header-panel text-center">
+            <button id="mobile-header-toggle" class="mobile-header-toggle" type="button" aria-expanded="true" aria-controls="mobile-header-panel">
+                <span class="mobile-header-toggle__arrow" aria-hidden="true"></span>
+                <span class="sr-only">Toggle mobile header</span>
+            </button>
+            <header id="mobile-header-panel" class="mobile-header-panel text-center">
                 <p class="mobile-kicker">Mobile Listening Deck</p>
                 <h1 class="mobile-title">Sample Deck</h1>
                 <p class="mobile-subtitle">Pan through the chain and hear how one moment in a song echoes through time.</p>

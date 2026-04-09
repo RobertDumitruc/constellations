@@ -11,6 +11,18 @@
     min-height: 100vh;
 }
 
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .site-intro {
     position: fixed;
     inset: 0;
@@ -489,8 +501,12 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 1.25rem 1rem 2rem;
+    justify-content: flex-start;
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
+    padding: max(0.75rem, env(safe-area-inset-top)) 1rem max(0.75rem, env(safe-area-inset-bottom));
     box-sizing: border-box;
     overflow: hidden;
     background:
@@ -528,10 +544,13 @@
     position: relative;
     z-index: 5;
     width: min(100%, 420px);
-    padding: 1rem;
+    padding: 0.25rem 0 0.5rem;
+    flex-shrink: 0;
+    transition: padding 0.35s ease;
 }
 
 .mobile-header-panel {
+    overflow: hidden;
     background: linear-gradient(180deg, rgba(12, 18, 34, 0.9), rgba(8, 12, 24, 0.7));
     border: 1px solid rgba(130, 230, 255, 0.18);
     border-radius: 24px;
@@ -539,6 +558,53 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
+    max-height: 420px;
+    opacity: 1;
+    transform: translateY(0);
+    transition: max-height 0.35s ease, opacity 0.25s ease, transform 0.35s ease, padding 0.35s ease, border-color 0.35s ease;
+}
+
+.mobile-header-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin: 0 auto 0.45rem;
+    border-radius: 999px;
+    border: 1px solid rgba(130, 230, 255, 0.2);
+    background: linear-gradient(180deg, rgba(12, 18, 34, 0.92), rgba(8, 12, 24, 0.78));
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+    color: rgba(188, 238, 250, 0.9);
+    cursor: pointer;
+}
+
+.mobile-header-toggle__arrow {
+    display: block;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg) translateY(-1px);
+    transition: transform 0.3s ease;
+}
+
+#card-deck-view.mobile-header-collapsed .mobile-header-shell {
+    padding-bottom: 0.2rem;
+}
+
+#card-deck-view.mobile-header-collapsed .mobile-header-panel {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-8px);
+    padding-top: 0;
+    padding-bottom: 0;
+    border-color: transparent;
+    pointer-events: none;
+}
+
+#card-deck-view.mobile-header-collapsed .mobile-header-toggle__arrow {
+    transform: rotate(225deg) translateY(-1px);
 }
 
 .mobile-kicker {
@@ -599,12 +665,14 @@
     align-items: center;
     justify-content: center;
     padding: 0.25rem 0 0.75rem;
+    min-height: 0;
 }
 
 .deck-stage {
     position: relative;
     width: 100%;
-    min-height: 70vh;
+    height: 100%;
+    min-height: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -626,7 +694,8 @@
 .mobile-tree-shell {
     position: relative;
     width: 100%;
-    min-height: 70vh;
+    height: 100%;
+    min-height: 0;
     display: flex;
     align-items: stretch;
     justify-content: center;
@@ -672,6 +741,8 @@
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.32);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
+    max-height: min(42%, 320px);
+    overflow-y: auto;
 }
 
 .mobile-tree-info .info-eyebrow {
@@ -800,6 +871,47 @@
         border-radius: 14px;
         font-size: 0.95rem;
         background: linear-gradient(180deg, rgba(4, 198, 224, 0.16), rgba(4, 198, 224, 0.08));
+    }
+
+    .mobile-header-toggle {
+        display: inline-flex;
+    }
+
+    .mobile-title {
+        font-size: clamp(2.5rem, 9vw, 3.4rem);
+    }
+
+    .mobile-subtitle {
+        font-size: 0.95rem;
+    }
+
+    .mobile-tree-hud {
+        top: 0.7rem;
+        max-width: calc(100% - 2.5rem);
+        text-align: center;
+    }
+
+    .mobile-tree-info {
+        left: 0.7rem;
+        right: 0.7rem;
+        bottom: 0.7rem;
+        padding: 0.9rem;
+        border-radius: 22px;
+        max-height: min(38%, 290px);
+    }
+
+    .mobile-tree-info h3 {
+        font-size: 1.15rem;
+        line-height: 1.05;
+    }
+
+    .mobile-tree-info .info-artist {
+        font-size: 0.9rem;
+    }
+
+    .mobile-tree-info .info-copy {
+        font-size: 0.88rem;
+        line-height: 1.4;
     }
 }
 
