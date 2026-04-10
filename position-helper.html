@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constellation Position Helper</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="antialiased">
+    <main class="helper-shell">
+        <section class="helper-panel">
+            <p class="helper-kicker">Photoshop to HTML</p>
+            <h1 class="helper-title">Constellation Position Helper</h1>
+            <p class="helper-copy">Enter your Photoshop canvas size and the center point of a dot. The helper converts that pixel position into the normalized <code>x</code> and <code>y</code> values used by your constellation data.</p>
+
+            <div class="helper-grid">
+                <label class="helper-field">
+                    <span>Canvas Width</span>
+                    <input id="canvas-width" type="number" min="1" step="1" value="2000">
+                </label>
+                <label class="helper-field">
+                    <span>Canvas Height</span>
+                    <input id="canvas-height" type="number" min="1" step="1" value="1200">
+                </label>
+                <label class="helper-field">
+                    <span>Dot Center X</span>
+                    <input id="dot-x" type="number" min="0" step="1" value="600">
+                </label>
+                <label class="helper-field">
+                    <span>Dot Center Y</span>
+                    <input id="dot-y" type="number" min="0" step="1" value="300">
+                </label>
+                <label class="helper-field helper-field--wide">
+                    <span>Song Title</span>
+                    <input id="dot-title" type="text" value="Amen, Brother">
+                </label>
+            </div>
+
+            <div class="helper-preview">
+                <div class="helper-result-card">
+                    <p class="helper-result-label">Normalized Values</p>
+                    <div class="helper-result-values">
+                        <div>
+                            <span>X</span>
+                            <strong id="result-x">0.3000</strong>
+                        </div>
+                        <div>
+                            <span>Y</span>
+                            <strong id="result-y">0.2500</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="helper-canvas-card">
+                    <div class="helper-canvas-meta">
+                        <span>Preview</span>
+                        <span id="helper-pixel-readout">600px, 300px</span>
+                    </div>
+                    <div id="helper-canvas" class="helper-canvas">
+                        <div id="helper-dot" class="helper-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="helper-output">
+                <p class="helper-result-label">JS Snippet</p>
+                <pre id="snippet-output" class="helper-snippet"></pre>
+                <button id="copy-snippet-btn" class="sample-button helper-copy-btn" type="button">Copy snippet</button>
+            </div>
+
+            <p class="helper-note">Tip: in Photoshop, use the center of the dot, not its top-left corner. If you design against a desktop mockup size, keep that same aspect ratio here for the cleanest translation.</p>
+        </section>
+    </main>
+
+    <script src="position-helper.js"></script>
+</body>
+</html>

@@ -848,6 +848,244 @@
     -webkit-backdrop-filter: blur(16px);
 }
 
+.hud-toggle {
+    position: fixed;
+    top: auto;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 40;
+    padding: 0.6rem 0.95rem;
+    border-radius: 999px;
+    border: 1px solid rgba(130, 230, 255, 0.18);
+    background: linear-gradient(180deg, rgba(10, 16, 29, 0.88), rgba(7, 10, 21, 0.82));
+    color: rgba(220, 244, 250, 0.9);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.26);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    cursor: pointer;
+}
+
+.hud-hidden .desktop-header-shell,
+.hud-hidden .desktop-hover-hint,
+.hud-hidden #qr-callout,
+.hud-hidden .mobile-tree-hud {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.helper-shell {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    background:
+        radial-gradient(circle at top, rgba(0, 220, 255, 0.14), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(255, 196, 0, 0.08), transparent 28%);
+}
+
+.helper-panel {
+    width: min(100%, 980px);
+    padding: 1.35rem;
+    border-radius: 30px;
+    border: 1px solid rgba(130, 230, 255, 0.18);
+    background: linear-gradient(180deg, rgba(12, 18, 34, 0.9), rgba(8, 12, 24, 0.78));
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.28);
+}
+
+.helper-kicker {
+    margin: 0 0 0.4rem;
+    color: rgba(166, 233, 255, 0.8);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.helper-title {
+    margin: 0;
+    color: #f4f8ff;
+    font-size: clamp(2.1rem, 6vw, 3.4rem);
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+    font-weight: 300;
+}
+
+.helper-copy {
+    max-width: 760px;
+    margin: 0.8rem 0 0;
+    color: rgba(215, 228, 235, 0.82);
+    font-size: 1rem;
+    line-height: 1.55;
+}
+
+.helper-copy code {
+    color: #b8f6ff;
+}
+
+.helper-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.95rem;
+    margin-top: 1.35rem;
+}
+
+.helper-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.helper-field--wide {
+    grid-column: 1 / -1;
+}
+
+.helper-field span,
+.helper-result-label,
+.helper-canvas-meta {
+    color: rgba(166, 233, 255, 0.78);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.helper-field input {
+    border: 1px solid rgba(122, 228, 255, 0.18);
+    border-radius: 16px;
+    padding: 0.9rem 1rem;
+    background: rgba(4, 10, 20, 0.76);
+    color: #eefaff;
+    font-size: 1rem;
+}
+
+.helper-preview {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 1rem;
+    margin-top: 1.2rem;
+}
+
+.helper-result-card,
+.helper-canvas-card,
+.helper-output {
+    border-radius: 24px;
+    border: 1px solid rgba(130, 230, 255, 0.12);
+    background: rgba(6, 12, 24, 0.72);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.helper-result-card {
+    padding: 1.1rem;
+}
+
+.helper-result-values {
+    display: grid;
+    gap: 0.9rem;
+    margin-top: 0.9rem;
+}
+
+.helper-result-values span {
+    display: block;
+    color: rgba(188, 214, 225, 0.72);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.helper-result-values strong {
+    display: block;
+    margin-top: 0.2rem;
+    color: #f4f8ff;
+    font-size: 2rem;
+    font-weight: 300;
+    letter-spacing: -0.04em;
+}
+
+.helper-canvas-card {
+    padding: 1rem;
+}
+
+.helper-canvas-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+}
+
+.helper-canvas {
+    position: relative;
+    min-height: 280px;
+    border-radius: 24px;
+    border: 1px solid rgba(111, 215, 255, 0.12);
+    background:
+        linear-gradient(180deg, rgba(8, 17, 32, 0.94), rgba(8, 14, 24, 0.98)),
+        radial-gradient(circle at center, rgba(0, 238, 255, 0.08), transparent 40%);
+    overflow: hidden;
+    cursor: crosshair;
+}
+
+.helper-canvas::before,
+.helper-canvas::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.helper-canvas::before {
+    background-image:
+        linear-gradient(rgba(140, 228, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(140, 228, 255, 0.08) 1px, transparent 1px);
+    background-size: 25% 25%;
+}
+
+.helper-canvas::after {
+    background:
+        radial-gradient(circle at 20% 24%, rgba(255, 215, 112, 0.08), transparent 18%),
+        radial-gradient(circle at 82% 16%, rgba(122, 228, 255, 0.08), transparent 18%);
+}
+
+.helper-dot {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: radial-gradient(circle at 35% 35%, #f3fcff, #9defff 55%, #45d9ff 100%);
+    box-shadow: 0 0 0 10px rgba(69, 217, 255, 0.14), 0 0 26px rgba(69, 217, 255, 0.5);
+    transform: translate(-50%, -50%);
+}
+
+.helper-output {
+    margin-top: 1rem;
+    padding: 1rem;
+}
+
+.helper-snippet {
+    margin: 0.8rem 0 0;
+    padding: 1rem;
+    border-radius: 18px;
+    background: rgba(4, 10, 20, 0.84);
+    color: #dffbff;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.helper-copy-btn {
+    margin-top: 0.9rem;
+}
+
+.helper-note {
+    margin: 1rem 0 0;
+    color: rgba(193, 210, 218, 0.76);
+    line-height: 1.55;
+}
+
 @media (max-width: 768px) {
     body {
         overflow-y: hidden;
@@ -875,6 +1113,14 @@
 
     .mobile-header-toggle {
         display: inline-flex;
+    }
+
+    .hud-toggle {
+        top: auto;
+        right: 0.75rem;
+        bottom: max(0.75rem, env(safe-area-inset-bottom));
+        padding: 0.55rem 0.8rem;
+        font-size: 0.72rem;
     }
 
     .mobile-title {
@@ -912,6 +1158,28 @@
     .mobile-tree-info .info-copy {
         font-size: 0.88rem;
         line-height: 1.4;
+    }
+
+    .helper-shell {
+        padding: 1rem 0.75rem;
+    }
+
+    .helper-panel {
+        padding: 1rem;
+        border-radius: 24px;
+    }
+
+    .helper-grid,
+    .helper-preview {
+        grid-template-columns: 1fr;
+    }
+
+    .helper-canvas {
+        min-height: 240px;
+    }
+
+    .helper-result-values strong {
+        font-size: 1.6rem;
     }
 }
 
