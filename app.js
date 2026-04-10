@@ -1,7 +1,7 @@
 ﻿
 const constellations = {
     "Amen Break": {
-        name: "The 'Amen Break'",
+        name: "Amen Break",
         songs: [
             { id: 1, title: "Amen, Brother", artist: "The Winstons", year: 1969, x: 0.5, y: 0.5, isSource: true, sample: "The foundational 6-second drum solo that became one of the most sampled breaks in history.", sound: [{ name: "Amen Brother", src: "audio/AmenBreak/The Winstons - Amen Brother - (320 Kbps).mp3", startTime: 86 }] },
             { id: 2, title: "Straight Outta Compton", artist: "N.W.A.", year: 1988, x: 0.3891, y: 0.2685, sample: "The iconic drum loop provides the track's raw backbone.", sound: [{ name: "Straight Outta compton", src: "audio/AmenBreak/N.W.A. - Straight Outta Compton (Official Music Video) - (256 Kbps).mp3", startTime: 4 }] },
@@ -16,7 +16,7 @@ const constellations = {
         ]
     },
     "Funky Drummer": {
-        name: "The 'Funky Drummer'",
+        name: "Funky Drummer",
         songs: [
             { id: 1, title: "Funky Drummer", artist: "James Brown", year: 1970, x: 0.5, y: 0.5287, isSource: true, sample: "Clyde Stubblefield's legendary drum break.", sound: [{ name: "Funky Drummer", src: "audio/FunkyDrummer/James Brown - Funky Drummer (Full Version, 1970) - HQ - (128 Kbps).mp3", startTime: 322, durationSeconds: 8 }] },
             { id: 2, title: "Rebel Without a Pause", artist: "Public Enemy", year: 1987, x: 0.3990, y: 0.7759, sample: "The break is chopped and layered to create a chaotic rhythm, with the lift from The JB's 'The Grunt' landing in the same moment.", sound: [{ name: "Rebel Without a Pause", src: "audio/FunkyDrummer/Public Enemy - Rebel Without A Pause - (256 Kbps).mp3", startTime: 12, durationSeconds: 10 }] },
@@ -29,8 +29,19 @@ const constellations = {
             { id: 9, title: "Different Strokes", artist: "Syl Johnson", year: 1967, x: 0.3547, y: 0.5, sample: "A famous break source that turns up inside 'Fight the Power'.", sound: [{ name: "Different Strokes", src: "audio/FunkyDrummer/Syl Johnson  Different Strokes - (320 Kbps).mp3", startTime: 27, durationSeconds: 10 }], isGuest: true, connectsTo: 3 },
             { id: 10, title: "The Grunt", artist: "The JB's", year: 1970, x: 0.2906, y: 0.6250, sample: "A foundational funk riff sampled by 'Rebel Without a Pause'.", sound: [{ name: "The Grunt", src: "audio/FunkyDrummer/The JB's-The Grunt. - (320 Kbps).mp3", startTime: 0, durationSeconds: 10 }], isGuest: true, connectsTo: 2 }
         ]
+    },
+    "I Shot The Sheriff": {
+        name: "I Shot The Sheriff",
+        songs: [
+            { id: 1, title: "I Shot The Sheriff", artist: "Bob Marley & The Wailers", year: 1973, x: 0.5, y: 0.5, isSource: true, sample: "The original reggae classic, with multiple moments that echo through later hip-hop and R&B tracks.", sound: [{ name: "I Shot The Sheriff", src: "audio/IShotTheSheriff/Bob Marley & The Wailers - I Shot The Sheriff - (192 Kbps).mp3", startTime: 1, durationSeconds: 10 }, { name: "I Shot The Sheriff (2nd Sample)", src: "audio/IShotTheSheriff/Bob Marley & The Wailers - I Shot The Sheriff - (192 Kbps).mp3", startTime: 46, durationSeconds: 7 }] },
+            { id: 2, title: "What's the 411?", artist: "Mary J. Blige feat. Grand Puba", year: 1992, x: 0.31, y: 0.34, sample: "Reworks the song's hook and reggae feel into an early '90s R&B and hip-hop crossover.", sound: [{ name: "What's the 411?", src: "audio/IShotTheSheriff/What's the 411_-Mary J. Blige feat. Grand Puba - (256 Kbps).mp3", startTime: 54, durationSeconds: 10 }] },
+            { id: 3, title: "Reflection Of Perfection (Radio Mix)", artist: "M.C. Jewel with D.J. Screen", year: 1990, x: 0.69, y: 0.3, sample: "Lifts the source into a rap setting, keeping the original's melodic pull front and center.", sound: [{ name: "Reflection Of Perfection", src: "audio/IShotTheSheriff/M.C. Jewel with D.J. Screen - Reflection Of Perfection (Radio Mix) - (256 Kbps).mp3", startTime: 166, durationSeconds: 10 }] },
+            { id: 4, title: "Loc Shot The Sheriff", artist: "C-Loc ft. SPM", year: 2000, x: 0.74, y: 0.57, sample: "Turns the source into a Southern rap variation, borrowing the familiar title and melodic identity.", sound: [{ name: "Loc Shot The Sheriff", src: "audio/IShotTheSheriff/C-Loc - Loc Shot The Sheriff ft. SPM - (256 Kbps).mp3", startTime: 48, durationSeconds: 10 }] },
+            { id: 5, title: "He Shot Me", artist: "Rapsody", year: 2024, x: 0.58, y: 0.76, sample: "Flips the narrative point of view while nodding back to the original Marley song.", sound: [{ name: "He Shot Me", src: "audio/IShotTheSheriff/Rapsody - He Shot Me - Lyric Video - (256 Kbps).mp3", startTime: 31, durationSeconds: 10 }] },
+            { id: 6, title: "Lyrical .44", artist: "Method Man, Redman, & Damian 'Jr. Gong' Marley", year: 2003, x: 0.28, y: 0.68, sample: "Brings the song's phrasing and reggae lineage into a later rap collaboration with Damian Marley in the mix.", sound: [{ name: "Lyrical .44", src: "audio/IShotTheSheriff/Method Man, Redman, & Damian _Jr. Gong_ Marley - Lyrical .44 - (256 Kbps).mp3", startTime: 2, durationSeconds: 10 }] }
+        ]
     }
-};
+  };
 
 let currentAudio = null;
 let snippetTimeout = null;
