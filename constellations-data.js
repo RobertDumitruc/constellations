@@ -109,7 +109,7 @@ window.CONSTELLATIONS_DATA = {
             "startTime": 139
           }
         ],
-        "connectsTo": 3
+        "connectsTo": [3, 9]
       },
       {
         "id": 7,
