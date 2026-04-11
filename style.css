@@ -941,6 +941,16 @@
     gap: 0.45rem;
 }
 
+.helper-checkbox {
+    justify-content: flex-end;
+}
+
+.helper-checkbox input {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: #35d9ff;
+}
+
 .helper-field--wide {
     grid-column: 1 / -1;
 }

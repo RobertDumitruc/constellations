@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Constellation Position Helper</title>
+    <title>Constellation Entry Generator</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,11 +13,19 @@
 <body class="antialiased">
     <main class="helper-shell">
         <section class="helper-panel">
-            <p class="helper-kicker">Photoshop to HTML</p>
-            <h1 class="helper-title">Constellation Position Helper</h1>
-            <p class="helper-copy">Enter your Photoshop canvas size and the center point of a dot. The helper converts that pixel position into the normalized <code>x</code> and <code>y</code> values used by your constellation data.</p>
+            <p class="helper-kicker">Photoshop to JSON</p>
+            <h1 class="helper-title">Constellation Entry Generator</h1>
+            <p class="helper-copy">Enter your Photoshop canvas size, dot position, and song metadata. The generator converts the position into normalized <code>x</code> and <code>y</code> values and builds a song entry you can drop straight into <code>constellations.json</code>.</p>
 
             <div class="helper-grid">
+                <label class="helper-field">
+                    <span>Song ID</span>
+                    <input id="song-id" type="number" min="1" step="1" value="1">
+                </label>
+                <label class="helper-field">
+                    <span>Year</span>
+                    <input id="song-year" type="text" value="1969">
+                </label>
                 <label class="helper-field">
                     <span>Canvas Width</span>
                     <input id="canvas-width" type="number" min="1" step="1" value="2000">
@@ -37,6 +45,42 @@
                 <label class="helper-field helper-field--wide">
                     <span>Song Title</span>
                     <input id="dot-title" type="text" value="Amen, Brother">
+                </label>
+                <label class="helper-field">
+                    <span>Artist</span>
+                    <input id="song-artist" type="text" value="The Winstons">
+                </label>
+                <label class="helper-field">
+                    <span>Audio Path</span>
+                    <input id="audio-src" type="text" value="audio/AmenBreak/The Winstons - Amen Brother - (320 Kbps).mp3">
+                </label>
+                <label class="helper-field">
+                    <span>Clip Label</span>
+                    <input id="clip-name" type="text" value="Amen Brother">
+                </label>
+                <label class="helper-field">
+                    <span>Start Time</span>
+                    <input id="clip-start" type="number" min="0" step="1" value="86">
+                </label>
+                <label class="helper-field">
+                    <span>Duration Seconds</span>
+                    <input id="clip-duration" type="number" min="1" step="1" value="10">
+                </label>
+                <label class="helper-field">
+                    <span>Connects To</span>
+                    <input id="connects-to" type="text" value="">
+                </label>
+                <label class="helper-field helper-field--wide">
+                    <span>Sample Description</span>
+                    <input id="sample-copy" type="text" value="The foundational 6-second drum solo that became one of the most sampled breaks in history.">
+                </label>
+                <label class="helper-field helper-checkbox">
+                    <span>Source Song</span>
+                    <input id="is-source" type="checkbox" checked>
+                </label>
+                <label class="helper-field helper-checkbox">
+                    <span>Guest Link</span>
+                    <input id="is-guest" type="checkbox">
                 </label>
             </div>
 
@@ -67,12 +111,12 @@
             </div>
 
             <div class="helper-output">
-                <p class="helper-result-label">JS Snippet</p>
+                <p class="helper-result-label">JSON Entry</p>
                 <pre id="snippet-output" class="helper-snippet"></pre>
-                <button id="copy-snippet-btn" class="sample-button helper-copy-btn" type="button">Copy snippet</button>
+                <button id="copy-snippet-btn" class="sample-button helper-copy-btn" type="button">Copy entry</button>
             </div>
 
-            <p class="helper-note">Tip: in Photoshop, use the center of the dot, not its top-left corner. If you design against a desktop mockup size, keep that same aspect ratio here for the cleanest translation.</p>
+            <p class="helper-note">Tip: in Photoshop, use the center of the dot, not its top-left corner. If a song has multiple buttons, you can paste the first generated entry and then manually add extra objects inside its <code>sound</code> array.</p>
         </section>
     </main>
 
