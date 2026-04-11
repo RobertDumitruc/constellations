@@ -145,7 +145,6 @@
         ],
         "isGuest": true,
         "connectsTo": [
-          1,
           5
         ]
       },

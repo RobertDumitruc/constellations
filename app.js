@@ -16,11 +16,13 @@ async function loadConstellations() {
 }
 
 let currentAudio = null;
+let sharedAudio = null;
 let snippetTimeout = null;
 let volumeFadeInterval = null;
 let audioEnabled = false;
 let activeConstellationKey = Object.keys(constellations)[0];
 let currentView = null;
+let playbackRequestId = 0;
 
 const constellationState = {
     canvas: null,
@@ -59,72 +61,144 @@ const mobileTreeState = {
     activePointerId: null
 };
 
+function getLinkedSongIds(songId, constellation) {
+    const linkedIds = new Set([songId]);
+    constellation.songs.forEach((song) => {
+        const parents = song.connectsTo
+            ? (Array.isArray(song.connectsTo) ? song.connectsTo : [song.connectsTo])
+            : [];
+        if (song.id === songId || parents.includes(songId)) linkedIds.add(song.id);
+        if (song.id === songId) parents.forEach((parentId) => linkedIds.add(parentId));
+    });
+    return linkedIds;
+}
+
+function getBezierPoint(t, sx, sy, cp1x, cp1y, cp2x, cp2y, ex, ey) {
+    const inv = 1 - t;
+    const x = (inv ** 3) * sx + 3 * (inv ** 2) * t * cp1x + 3 * inv * (t ** 2) * cp2x + (t ** 3) * ex;
+    const y = (inv ** 3) * sy + 3 * (inv ** 2) * t * cp1y + 3 * inv * (t ** 2) * cp2y + (t ** 3) * ey;
+    return { x, y };
+}
+
 function triggerSample(songId, sampleIndex) {
     const song = constellations[activeConstellationKey].songs.find((candidate) => candidate.id === songId);
-    if (song && song.sound && song.sound[sampleIndex]) playSnippet(song.sound[sampleIndex]);
+    if (song && song.sound && song.sound[sampleIndex]) playSnippet(song.sound[sampleIndex], song.id);
 }
 
 window.triggerSample = triggerSample;
 
-function playSnippet(soundObject) {
+function buildAudioUrl(src) {
+    return src
+        .split('/')
+        .map((segment) => encodeURIComponent(decodeURIComponent(segment)))
+        .join('/');
+}
+
+function playSnippet(soundObject, songId = null) {
     if (!audioEnabled || !soundObject || !soundObject.src) return;
     clearTimeout(snippetTimeout);
     clearInterval(volumeFadeInterval);
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
+    if (!sharedAudio) {
+        sharedAudio = new Audio();
+        sharedAudio.preload = 'auto';
+        sharedAudio.volume = 0;
+        currentAudio = sharedAudio;
     }
+    if (currentAudio) currentAudio.pause();
+    playbackRequestId += 1;
+    const requestId = playbackRequestId;
 
     const { src, startTime = 0 } = soundObject;
     const snippetDurationSeconds = soundObject.durationSeconds || 10;
     const durationMs = snippetDurationSeconds * 1000;
-    const audio = new Audio(src);
+    const audio = sharedAudio;
     currentAudio = audio;
-    audio.preload = 'auto';
     audio.volume = 0;
-
-    const startPlayback = () => {
-        if (currentAudio !== audio) return;
-        audio.currentTime = startTime;
-    audio.play().catch(() => {});
-    };
-
-    if (audio.readyState >= 1) {
-        startPlayback();
-    } else {
-        audio.addEventListener('loadedmetadata', startPlayback, { once: true });
-    }
 
     let currentVolume = 0;
     const fadeDuration = 1000;
     const fadeSteps = 20;
     const volumeStep = 100 / fadeSteps;
     const stepInterval = fadeDuration / fadeSteps;
+    let playbackStarted = false;
 
-    volumeFadeInterval = setInterval(() => {
-        currentVolume += volumeStep;
-        if (currentVolume >= 100) {
-            currentVolume = 100;
-            clearInterval(volumeFadeInterval);
-        }
-        if (currentAudio === audio) currentAudio.volume = currentVolume / 100;
-    }, stepInterval);
+    const beginFadeInAndStopTimer = () => {
+        if (playbackStarted || currentAudio !== audio || requestId !== playbackRequestId) return;
+        playbackStarted = true;
 
-    snippetTimeout = setTimeout(() => {
-        clearInterval(volumeFadeInterval);
         volumeFadeInterval = setInterval(() => {
-            currentVolume -= volumeStep;
-            if (currentVolume <= 0) {
-                currentVolume = 0;
-                if (currentAudio === audio) {
-                    currentAudio.pause();
-                    currentAudio.currentTime = 0;
-                }
+            currentVolume += volumeStep;
+            if (currentVolume >= 100) {
+                currentVolume = 100;
                 clearInterval(volumeFadeInterval);
             }
             if (currentAudio === audio) currentAudio.volume = currentVolume / 100;
         }, stepInterval);
-    }, durationMs - fadeDuration);
+
+        snippetTimeout = setTimeout(() => {
+            clearInterval(volumeFadeInterval);
+            volumeFadeInterval = setInterval(() => {
+                currentVolume -= volumeStep;
+                if (currentVolume <= 0) {
+                    currentVolume = 0;
+                    if (currentAudio === audio) {
+                        currentAudio.pause();
+                        currentAudio.currentTime = 0;
+                    }
+                    clearInterval(volumeFadeInterval);
+                }
+                if (currentAudio === audio) currentAudio.volume = currentVolume / 100;
+            }, stepInterval);
+        }, durationMs - fadeDuration);
+    };
+
+    const startPlayback = () => {
+        if (currentAudio !== audio || requestId !== playbackRequestId) return;
+
+        const duration = Number.isFinite(audio.duration) ? audio.duration : null;
+        const safeStart = duration ? Math.min(startTime, Math.max(0, duration - 0.15)) : startTime;
+
+        const playNow = () => {
+            if (currentAudio !== audio || requestId !== playbackRequestId) return;
+            audio.play()
+                .then(beginFadeInAndStopTimer)
+                .catch(() => {});
+        };
+
+        if (safeStart <= 0.05) {
+            playNow();
+            return;
+        }
+
+        let seekHandled = false;
+        const finalizeSeek = () => {
+            if (seekHandled || currentAudio !== audio || requestId !== playbackRequestId) return;
+            seekHandled = true;
+            audio.removeEventListener('seeked', finalizeSeek);
+            playNow();
+        };
+
+        audio.addEventListener('seeked', finalizeSeek, { once: true });
+
+        try {
+            audio.currentTime = safeStart;
+            window.setTimeout(finalizeSeek, 250);
+        } catch (error) {
+            playNow();
+        }
+    };
+
+    const nextSrc = buildAudioUrl(src);
+    if (!audio.src || !audio.src.endsWith(nextSrc)) {
+        audio.src = nextSrc;
+        audio.load();
+    }
+
+    if (audio.readyState >= 1 && audio.src && audio.src.endsWith(nextSrc)) {
+        startPlayback();
+    } else {
+        audio.addEventListener('loadedmetadata', startPlayback, { once: true });
+    }
 }
 
 function initAudio() {
@@ -210,8 +284,21 @@ function initConstellations() {
         constellationState.tooltip.addEventListener('mouseleave', constellationState.tooltipLeaveHandler);
 
         constellationState.stars = [];
-        for (let i = 0; i < 200; i += 1) {
-            constellationState.stars.push({ x: Math.random(), y: Math.random(), radius: Math.random() * 1.5, alpha: Math.random() * 0.5 + 0.2, velocity: Math.random() * 0.1 + 0.05 });
+        for (let i = 0; i < 260; i += 1) {
+            const layer = Math.random() > 0.82 ? 'glow' : (Math.random() > 0.45 ? 'mid' : 'far');
+            constellationState.stars.push({
+                x: Math.random(),
+                y: Math.random(),
+                radius: layer === 'glow' ? (Math.random() * 2.2 + 1.2) : (layer === 'mid' ? Math.random() * 1.6 + 0.5 : Math.random() * 1.1 + 0.25),
+                alpha: layer === 'glow' ? Math.random() * 0.22 + 0.08 : Math.random() * 0.42 + 0.12,
+                velocity: layer === 'glow' ? Math.random() * 0.03 + 0.01 : Math.random() * 0.1 + 0.05,
+                twinkle: Math.random() * Math.PI * 2,
+                twinkleSpeed: Math.random() * 0.012 + 0.004,
+                color: layer === 'glow'
+                    ? (Math.random() > 0.55 ? 'rgba(110, 240, 255,' : 'rgba(255, 213, 126,')
+                    : 'rgba(255, 255, 255,',
+                layer
+            });
         }
 
         constellationState.resizeHandler = () => {
@@ -232,9 +319,17 @@ function animateConstellation() {
     stars.forEach((star) => {
         star.y -= star.velocity / 1000;
         if (star.y < 0) star.y = 1;
+        star.twinkle += star.twinkleSpeed;
+        const pulse = (Math.sin(star.twinkle) + 1) / 2;
         ctx.beginPath();
         ctx.arc(star.x * canvas.width, star.y * canvas.height, star.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+        ctx.fillStyle = `${star.color} ${Math.min(0.9, star.alpha * (0.72 + pulse * 0.55))})`;
+        if (star.layer === 'glow') {
+            ctx.shadowColor = star.color.replace(/,$/, ', 0.35)');
+            ctx.shadowBlur = 18;
+        } else {
+            ctx.shadowBlur = 0;
+        }
         ctx.fill();
     });
     drawConstellationLines();
@@ -245,52 +340,57 @@ function drawConstellationStars() {
     const { ctx, canvas, hoveredStar } = constellationState;
     const constellation = constellations[activeConstellationKey];
     if (!constellation) return;
+    const linkedIds = hoveredStar ? getLinkedSongIds(hoveredStar.id, constellation) : null;
 
     constellation.songs.forEach((song) => {
         const x = song.x * canvas.width;
         const y = song.y * canvas.height;
         const isHovered = hoveredStar && hoveredStar.id === song.id;
+        const isLinked = linkedIds ? linkedIds.has(song.id) : false;
+        const isDimmed = hoveredStar && !isLinked;
         const radius = song.isSource ? 18 : song.isGuest ? 11 : 13;
 
         ctx.save();
         ctx.beginPath();
-        ctx.arc(x, y, radius + (isHovered ? 10 : 5), 0, Math.PI * 2);
-        ctx.fillStyle = song.isSource ? 'rgba(255, 229, 151, 0.12)' : 'rgba(0, 234, 255, 0.1)';
+        ctx.arc(x, y, radius + (isHovered ? 12 : isLinked ? 8 : 5), 0, Math.PI * 2);
+        ctx.fillStyle = song.isSource
+            ? `rgba(255, 229, 151, ${isDimmed ? 0.05 : isLinked ? 0.18 : 0.12})`
+            : `rgba(0, 234, 255, ${isDimmed ? 0.05 : isLinked ? 0.16 : 0.1})`;
         ctx.fill();
 
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, Math.PI * 2);
         if (song.isGuest) {
-            ctx.fillStyle = '#dfccff';
-            ctx.shadowColor = 'rgba(210, 180, 255, 0.7)';
+            ctx.fillStyle = isDimmed ? 'rgba(223, 204, 255, 0.45)' : '#dfccff';
+            ctx.shadowColor = isLinked ? 'rgba(210, 180, 255, 0.95)' : 'rgba(210, 180, 255, 0.7)';
         } else if (song.isSource) {
-            ctx.fillStyle = '#fff4c1';
-            ctx.shadowColor = 'rgba(255, 231, 165, 0.85)';
+            ctx.fillStyle = isDimmed ? 'rgba(255, 244, 193, 0.48)' : '#fff4c1';
+            ctx.shadowColor = isLinked ? 'rgba(255, 231, 165, 1)' : 'rgba(255, 231, 165, 0.85)';
         } else {
-            ctx.fillStyle = '#b9f7ff';
-            ctx.shadowColor = 'rgba(0, 255, 255, 0.72)';
+            ctx.fillStyle = isDimmed ? 'rgba(185, 247, 255, 0.42)' : '#b9f7ff';
+            ctx.shadowColor = isLinked ? 'rgba(0, 255, 255, 1)' : 'rgba(0, 255, 255, 0.72)';
         }
-        ctx.shadowBlur = isHovered ? 28 : 18;
+        ctx.shadowBlur = isHovered ? 34 : isLinked ? 26 : isDimmed ? 8 : 18;
         ctx.fill();
         ctx.restore();
 
-        if (isHovered) {
+        if (isHovered || isLinked) {
             ctx.save();
             ctx.beginPath();
-            ctx.arc(x, y, radius + 16, 0, Math.PI * 2);
-            ctx.strokeStyle = 'rgba(144, 241, 255, 0.7)';
-            ctx.lineWidth = 2;
+            ctx.arc(x, y, radius + (isHovered ? 16 : 13), 0, Math.PI * 2);
+            ctx.strokeStyle = isHovered ? 'rgba(144, 241, 255, 0.78)' : 'rgba(144, 241, 255, 0.34)';
+            ctx.lineWidth = isHovered ? 2 : 1.4;
             ctx.setLineDash([4, 6]);
             ctx.stroke();
             ctx.restore();
         }
 
         ctx.save();
-        ctx.fillStyle = isHovered ? 'rgba(245, 251, 255, 0.98)' : 'rgba(203, 228, 236, 0.86)';
+        ctx.fillStyle = isHovered ? 'rgba(245, 251, 255, 0.98)' : isDimmed ? 'rgba(203, 228, 236, 0.4)' : isLinked ? 'rgba(232, 248, 255, 0.95)' : 'rgba(203, 228, 236, 0.86)';
         ctx.font = song.isSource ? '700 14px Inter, sans-serif' : '600 13px Inter, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(song.title, x, y + radius + 26);
-        ctx.fillStyle = 'rgba(150, 184, 196, 0.8)';
+        ctx.fillStyle = isDimmed ? 'rgba(150, 184, 196, 0.35)' : 'rgba(150, 184, 196, 0.8)';
         ctx.font = '500 11px Inter, sans-serif';
         ctx.fillText(String(song.year), x, y + radius + 42);
         ctx.restore();
@@ -303,6 +403,9 @@ function drawConstellationLines() {
     if (!constellation) return;
     const sourceStar = constellation.songs.find((song) => song.isSource);
     if (!sourceStar) return;
+    const hoveredStar = constellationState.hoveredStar;
+    const linkedIds = hoveredStar ? getLinkedSongIds(hoveredStar.id, constellation) : null;
+    const now = performance.now() * 0.00022;
 
     constellation.songs.forEach((endStar) => {
         if (endStar.isSource) return;
@@ -315,15 +418,36 @@ function drawConstellationLines() {
             const ex = endStar.x * canvas.width;
             const ey = endStar.y * canvas.height;
             const midY = sy + (ey - sy) * 0.45;
+            const isLinked = linkedIds ? (linkedIds.has(startStar.id) && linkedIds.has(endStar.id)) : false;
+            const isDimmed = hoveredStar && !isLinked;
+
             ctx.beginPath();
             ctx.moveTo(sx, sy);
             ctx.bezierCurveTo(sx, midY, ex, midY, ex, ey);
-            ctx.strokeStyle = 'rgba(104, 231, 255, 0.34)';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = isLinked ? 'rgba(124, 238, 255, 0.62)' : isDimmed ? 'rgba(104, 231, 255, 0.1)' : 'rgba(104, 231, 255, 0.34)';
+            ctx.lineWidth = isLinked ? 2.8 : 2;
+            if (isLinked) {
+                ctx.shadowColor = 'rgba(104, 231, 255, 0.24)';
+                ctx.shadowBlur = 10;
+            }
             ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            if (isLinked && hoveredStar) {
+                const tracerT = (now + ((startStar.id + endStar.id) * 0.13)) % 1;
+                const tracer = getBezierPoint(tracerT, sx, sy, sx, midY, ex, midY, ex, ey);
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(tracer.x, tracer.y, 4.2, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(204, 251, 255, 0.95)';
+                ctx.shadowColor = 'rgba(104, 231, 255, 0.85)';
+                ctx.shadowBlur = 16;
+                ctx.fill();
+                ctx.restore();
+            }
         });
     });
-}
+  }
 
 function handleConstellationMouseMove(e) {
     if (!audioEnabled) return;
@@ -369,10 +493,10 @@ function showConstellationTooltip(star) {
         tooltipHTML += '</div>';
     }
 
-    tooltip.innerHTML = tooltipHTML;
-    typeWriter(star.sample, document.getElementById('typewriter-output'));
-    if (star.sound && star.sound.length === 1) playSnippet(star.sound[0]);
-    constellationState.lastHoveredStarId = star.id;
+      tooltip.innerHTML = tooltipHTML;
+      typeWriter(star.sample, document.getElementById('typewriter-output'));
+      if (star.sound && star.sound.length === 1) playSnippet(star.sound[0], star.id);
+      constellationState.lastHoveredStarId = star.id;
 
     let x = star.x * window.innerWidth + 20;
     let y = star.y * window.innerHeight;
@@ -392,12 +516,13 @@ function hideConstellationTooltipAndStopAudio() {
         if (currentAudio) {
             currentAudio.pause();
             currentAudio.currentTime = 0;
+          }
+          clearTimeout(snippetTimeout);
+          clearInterval(volumeFadeInterval);
+          playbackRequestId += 1;
+          constellationState.lastHoveredStarId = null;
         }
-        clearTimeout(snippetTimeout);
-        clearInterval(volumeFadeInterval);
-        constellationState.lastHoveredStarId = null;
-    }
-}
+  }
 
 function typeWriter(text, element) {
     if (!element) return;
@@ -769,7 +894,7 @@ function selectMobileTreeSong(song) {
     mobileTreeState.selectedSongId = song.id;
     renderMobileTree();
     updateMobileTreeInfo(song);
-    if (song.sound && song.sound[0] && song.sound[0].src) playSnippet(song.sound[0]);
+    if (song.sound && song.sound[0] && song.sound[0].src) playSnippet(song.sound[0], song.id);
 }
 
 function getMobileTreeSelectedSong() {

@@ -145,7 +145,6 @@ window.CONSTELLATIONS_DATA = {
         ],
         "isGuest": true,
         "connectsTo": [
-          1,
           5
         ]
       },
